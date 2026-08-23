@@ -1551,7 +1551,10 @@ function openFinancistaDetalle(id) {
         <div style="text-align:right"><div class="strong" style="color:${saldo > 0 ? 'var(--red)' : 'var(--green)'}">${money(saldo)}</div><div class="hint">${pagadas}/${cuotas.length} pagadas</div></div>
       </div>
       <div class="card-pad">${cuotas.map((c) => cuotaRow(c, 'cuotas_financista')).join('')}
-        <button class="btn btn-soft btn-xs" data-act="del-prestamo" data-id="${p.id}" style="margin-top:6px">Eliminar préstamo</button>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-ghost btn-xs" data-act="edit-prestamo" data-id="${p.id}">✎ Editar préstamo</button>
+          <button class="btn btn-soft btn-xs" data-act="del-prestamo" data-id="${p.id}">Eliminar</button>
+        </div>
       </div>
     </div>`;
   }).join('') : `<div class="empty" style="padding:26px"><div class="big">💰</div><p>Sin préstamos registrados para este financista.</p></div>`;
@@ -1579,6 +1582,7 @@ function openFinancistaDetalle(id) {
   $('#fin-nuevo-prestamo').addEventListener('click', () => { openPrestamoForm(f); });
   $$('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
   $$('#modal-root [data-act="del-prestamo"]').forEach((b) => b.addEventListener('click', () => eliminarPrestamo(b.dataset.id, f.id)));
+  $$('#modal-root [data-act="edit-prestamo"]').forEach((b) => b.addEventListener('click', () => { const pr = state.prestamos.find((x) => x.id === b.dataset.id); if (pr) { closeModal(); openPrestamoForm(f, pr); } }));
 }
 
 async function eliminarPrestamo(pid, finId) {
@@ -1591,31 +1595,37 @@ async function eliminarPrestamo(pid, finId) {
 /* ============================================================
    MODAL: Préstamo de financista
 ============================================================ */
-function openPrestamoForm(f) {
-  const vehOpts = `<option value="">— Ninguno —</option>` + state.vehiculos.map((v) => `<option value="${v.id}">${esc(v.marca || '')} ${esc(v.modelo)} ${v.patente ? '(' + esc(v.patente) + ')' : ''}</option>`).join('');
+function openPrestamoForm(f, prestamo) {
+  const p = prestamo || {};
+  const editar = !!prestamo;
+  const vehOpts = `<option value="">— Ninguno —</option>` + state.vehiculos.map((v) => `<option value="${v.id}" ${p.vehiculo_id === v.id ? 'selected' : ''}>${esc(v.marca || '')} ${esc(v.modelo)} ${v.patente ? '(' + esc(v.patente) + ')' : ''}</option>`).join('');
   const html = `
-  <div class="modal-head"><h3>Nuevo préstamo · ${esc(f.nombre)}</h3><button class="x" data-close>×</button></div>
+  <div class="modal-head"><h3>${editar ? 'Editar' : 'Nuevo'} préstamo · ${esc(f.nombre)}</h3><button class="x" data-close>×</button></div>
   <div class="modal-body">
     <div class="form-grid">
-      <div class="field"><label>Monto (capital)</label><input id="p-monto" type="number" placeholder="0"></div>
-      <div class="field"><label>Interés mensual %</label><input id="p-interes" type="number" step="0.01" value="${f.interes_mensual_pct ?? 0}"></div>
-      <div class="field"><label>Fecha de inicio</label><input id="p-fecha" type="date" value="${todayISO()}"></div>
-      <div class="field"><label>N° de cuotas</label><input id="p-n" type="number" value="6"></div>
+      <div class="field"><label>Monto (capital)</label><input id="p-monto" type="number" value="${p.monto ?? ''}" placeholder="0"></div>
+      <div class="field"><label>Interés mensual %</label><input id="p-interes" type="number" step="0.01" value="${p.interes_mensual_pct ?? (f.interes_mensual_pct ?? 0)}"></div>
+      <div class="field"><label>Fecha de inicio</label><input id="p-fecha" type="date" value="${p.fecha_inicio || todayISO()}"></div>
+      <div class="field"><label>N° de cuotas</label><input id="p-n" type="number" value="${p.n_cuotas ?? 6}"></div>
       <div class="field"><label>Modalidad</label><select id="p-modalidad">
-        <option value="interes_mensual">Interés mensual + capital al final</option>
-        <option value="cuota_fija">Cuota fija (amortizada)</option>
+        <option value="interes_mensual" ${p.modalidad !== 'cuota_fija' ? 'selected' : ''}>Interés mensual + capital al final</option>
+        <option value="cuota_fija" ${p.modalidad === 'cuota_fija' ? 'selected' : ''}>Cuota fija (amortizada)</option>
       </select></div>
       <div class="field"><label>Auto asociado (opcional)</label><select id="p-vehiculo">${vehOpts}</select></div>
-      <div class="field full"><label>Descripción (opcional)</label><input id="p-desc" placeholder="Ej: capital para compra de inventario"></div>
+      ${editar ? `<div class="field"><label>Estado</label><select id="p-estado"><option value="vigente" ${p.estado !== 'pagado' ? 'selected' : ''}>Vigente</option><option value="pagado" ${p.estado === 'pagado' ? 'selected' : ''}>Pagado</option></select></div>` : ''}
+      <div class="field full"><label>Descripción (opcional)</label><input id="p-desc" value="${esc(p.descripcion)}" placeholder="Ej: capital para compra de inventario"></div>
     </div>
     <div class="calcbox" id="p-preview">
       <div class="c-item"><div class="l">Cuota estimada</div><div class="v" id="pp-cuota">$0</div></div>
       <div class="c-item"><div class="l">Total a pagar</div><div class="v" id="pp-total">$0</div></div>
       <div class="c-item"><div class="l">Interés total</div><div class="v" id="pp-int" style="color:var(--red)">$0</div></div>
     </div>
-    <div class="help">Se generará automáticamente el calendario de cuotas con sus fechas de vencimiento.</div>
+    <div class="help">${editar ? 'Si cambias monto, interés, cuotas, modalidad o fecha, se regenerará el calendario de cuotas.' : 'Se generará automáticamente el calendario de cuotas con sus fechas de vencimiento.'}</div>
   </div>
-  <div class="modal-foot"><div></div><div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="p-save">Crear préstamo</button></div></div>`;
+  <div class="modal-foot">
+    <div>${editar ? `<button class="btn btn-danger" id="p-del">Eliminar</button>` : '<span></span>'}</div>
+    <div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="p-save">${editar ? 'Guardar cambios' : 'Crear préstamo'}</button></div>
+  </div>`;
   modal(html);
   const upd = () => {
     const monto = num($('#p-monto').value), iPct = num($('#p-interes').value), n = intOr($('#p-n').value, 1), mod = $('#p-modalidad').value;
@@ -1628,18 +1638,37 @@ function openPrestamoForm(f) {
   };
   ['p-monto', 'p-interes', 'p-n', 'p-modalidad'].forEach((id) => $('#' + id).addEventListener('input', upd));
   upd();
+  if (editar) $('#p-del').addEventListener('click', () => eliminarPrestamo(p.id, f.id));
   $('#p-save').addEventListener('click', async () => {
     const monto = num($('#p-monto').value);
     if (monto <= 0) { toast('Ingresa el monto del préstamo', 'err'); return; }
     const iPct = num($('#p-interes').value), n = intOr($('#p-n').value, 1), mod = $('#p-modalidad').value, fecha = $('#p-fecha').value || todayISO();
-    const payload = { financista_id: f.id, vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, descripcion: $('#p-desc').value.trim() || null };
     try {
-      const { data: pr, error } = await supabase.from('prestamos_financista').insert(payload).select('id').single();
-      if (error) throw error;
-      const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha }).map((c) => ({ ...c, prestamo_id: pr.id, financista_id: f.id }));
-      const { error: e2 } = await supabase.from('cuotas_financista').insert(cuotas);
-      if (e2) throw e2;
-      await loadAll(); toast('Préstamo creado', 'ok'); closeModal(); openFinancistaDetalle(f.id); renderView();
+      if (editar) {
+        const estado = $('#p-estado') ? $('#p-estado').value : (p.estado || 'vigente');
+        const planChanged = Number(p.monto) !== monto || Number(p.interes_mensual_pct) !== iPct || Number(p.n_cuotas) !== n || (p.modalidad || 'interes_mensual') !== mod || p.fecha_inicio !== fecha;
+        if (planChanged) {
+          const anyPaid = state.cuotasF.some((c) => c.prestamo_id === p.id && c.pagada);
+          if (anyPaid && !confirm('Cambiaste el plan del préstamo. Se regenerará el calendario y se perderán los pagos ya registrados de este préstamo. ¿Continuar?')) return;
+        }
+        const up = { vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, descripcion: $('#p-desc').value.trim() || null, estado };
+        const { error } = await supabase.from('prestamos_financista').update(up).eq('id', p.id);
+        if (error) throw error;
+        if (planChanged) {
+          await supabase.from('cuotas_financista').delete().eq('prestamo_id', p.id);
+          const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha }).map((c) => ({ ...c, prestamo_id: p.id, financista_id: f.id }));
+          if (cuotas.length) { const { error: e2 } = await supabase.from('cuotas_financista').insert(cuotas); if (e2) throw e2; }
+        }
+        await loadAll(); toast('Préstamo actualizado', 'ok'); closeModal(); openFinancistaDetalle(f.id); renderView();
+      } else {
+        const payload = { financista_id: f.id, vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, descripcion: $('#p-desc').value.trim() || null };
+        const { data: pr, error } = await supabase.from('prestamos_financista').insert(payload).select('id').single();
+        if (error) throw error;
+        const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha }).map((c) => ({ ...c, prestamo_id: pr.id, financista_id: f.id }));
+        const { error: e2 } = await supabase.from('cuotas_financista').insert(cuotas);
+        if (e2) throw e2;
+        await loadAll(); toast('Préstamo creado', 'ok'); closeModal(); openFinancistaDetalle(f.id); renderView();
+      }
     } catch (e) { console.error(e); toast('Error: ' + (e.message || e), 'err'); }
   });
 }
