@@ -468,6 +468,7 @@ table.tbl tr:hover td{background:var(--surface-2)}
       <button data-view="autos"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17h10"/><path d="M5 17H4a1 1 0 0 1-1-1v-3.2a2 2 0 0 1 .5-1.3L6 8.5A2 2 0 0 1 7.5 8h9a2 2 0 0 1 1.5.7l2.5 2.8a2 2 0 0 1 .5 1.3V16a1 1 0 0 1-1 1h-1"/><path d="M6 11h12"/><circle cx="7" cy="17" r="1.7"/><circle cx="17" cy="17" r="1.7"/></svg></span> Autos</button>
       <button data-view="financistas"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v5.5c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3V6"/><path d="M4.5 11.5V17c0 1.66 3.36 3 7.5 3s7.5-1.34 7.5-3v-5.5"/></svg></span> Financistas</button>
       <button data-view="vencimientos"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18"/><path d="M8 2.5v4M16 2.5v4"/></svg></span> Vencimientos</button>
+      <button data-view="reportes"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="7" rx="0.6"/><rect x="12" y="7" width="3" height="11" rx="0.6"/><rect x="17" y="4" width="3" height="14" rx="0.6"/></svg></span> Reportes</button>
       <button data-view="config"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></span> Configuración</button>
     </nav>
     <div class="spacer"></div>
@@ -803,6 +804,7 @@ const VIEWS = {
   autos: { title: 'Autos', sub: 'Inventario, ventas y ganancias' },
   financistas: { title: 'Financistas', sub: 'Deuda, pagos y vencimientos' },
   vencimientos: { title: 'Vencimientos', sub: 'Cuotas por cobrar y por pagar' },
+  reportes: { title: 'Reportes', sub: 'Ganancia mes a mes' },
   config: { title: 'Configuración', sub: 'Datos de la empresa y cuenta' },
 };
 function navigate(view) {
@@ -816,6 +818,7 @@ function navigate(view) {
 function topbarActions(view) {
   if (view === 'autos') return `<button class="btn btn-primary" onclick="window.__app.nuevoAuto()">＋ Nuevo auto</button>`;
   if (view === 'financistas') return `<button class="btn btn-primary" onclick="window.__app.nuevoFinancista()">＋ Nuevo financista</button>`;
+  if (view === 'reportes') return `<button class="btn btn-primary" onclick="window.__app.exportarReporte()">🖨 Exportar PDF</button>`;
   return '';
 }
 function renderView() {
@@ -824,6 +827,7 @@ function renderView() {
   else if (state.view === 'autos') c.innerHTML = renderAutos();
   else if (state.view === 'financistas') c.innerHTML = renderFinancistas();
   else if (state.view === 'vencimientos') c.innerHTML = renderVencimientos();
+  else if (state.view === 'reportes') c.innerHTML = renderReportes();
   else if (state.view === 'config') { c.innerHTML = renderConfig(); bindConfig(); }
 }
 
@@ -1706,6 +1710,99 @@ function openPrestamoForm(f, prestamo) {
 }
 
 /* ============================================================
+   Vista: REPORTES (ganancia por mes)
+============================================================ */
+function capMes(k) {
+  const [y, m] = String(k).split('-').map(Number);
+  const s = `${MESES_L[(m || 1) - 1]} ${y}`;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function reporteMensual() {
+  const meses = {};
+  const ensure = (k) => (meses[k] || (meses[k] = { autos: 0, ventas: 0, base: 0, intComp: 0, intFin: 0 }));
+  for (const v of state.vehiculos) {
+    if (v.estado === 'vendido' && v.fecha_venta) {
+      const m = ensure(String(v.fecha_venta).slice(0, 7));
+      m.autos += 1;
+      m.ventas += Number(v.precio_venta) || 0;
+      m.base += Number(v.ganancia_base) || 0;
+      m.intComp += Number(v.interes_comprador) || 0;
+    }
+  }
+  for (const c of state.cuotasF) {
+    if (!c.fecha_vencimiento) continue;
+    ensure(String(c.fecha_vencimiento).slice(0, 7)).intFin += Number(c.interes) || 0;
+  }
+  return Object.keys(meses).sort((a, b) => b.localeCompare(a)).map((k) => {
+    const m = meses[k];
+    return { mes: k, autos: m.autos, ventas: m.ventas, base: m.base, intComp: m.intComp, intFin: m.intFin, neta: m.base + m.intComp - m.intFin };
+  });
+}
+function totalesReporte(rows) {
+  return rows.reduce((a, r) => ({ autos: a.autos + r.autos, ventas: a.ventas + r.ventas, base: a.base + r.base, intComp: a.intComp + r.intComp, intFin: a.intFin + r.intFin, neta: a.neta + r.neta }), { autos: 0, ventas: 0, base: 0, intComp: 0, intFin: 0, neta: 0 });
+}
+function renderReportes() {
+  const rows = reporteMensual();
+  if (!rows.length) {
+    return `<div class="card"><div class="empty"><div class="big">📊</div><h4>Aún no hay datos para el reporte</h4><p>Cuando registres ventas de autos o cuotas de financistas, aquí verás tu ganancia mes a mes.</p></div></div>`;
+  }
+  const anio = todayISO().slice(0, 4);
+  const tot = totalesReporte(rows);
+  const netaAnio = rows.filter((r) => r.mes.slice(0, 4) === anio).reduce((a, r) => a + r.neta, 0);
+  const mejor = rows.reduce((best, r) => (r.neta > best.neta ? r : best), rows[0]);
+  const kpis = `<div class="kpi-grid">
+    <div class="kpi hl"><div class="k-label"><span class="dot g"></span> Ganancia neta total</div><div class="k-value">${money(tot.neta)}</div><div class="k-sub">Todos los meses</div></div>
+    <div class="kpi"><div class="k-label"><span class="dot b"></span> Ganancia ${anio}</div><div class="k-value">${money(netaAnio)}</div><div class="k-sub">Acumulado del año</div></div>
+    <div class="kpi good"><div class="k-label"><span class="dot v"></span> Mejor mes</div><div class="k-value" style="font-size:20px">${money(mejor.neta)}</div><div class="k-sub">${capMes(mejor.mes)}</div></div>
+  </div>`;
+  const fila = (r, isTot) => `<tr${isTot ? ' style="border-top:2px solid var(--line);font-weight:800"' : ''}>
+    <td class="cell-first"><div class="cell-main">${isTot ? 'Total' : capMes(r.mes)}</div><div class="cell-sub">${r.autos} auto(s)${isTot ? '' : ' vendido(s)'}</div></td>
+    <td class="num" data-label="Ventas">${money(r.ventas)}</td>
+    <td class="num" data-label="Margen autos">${money(r.base)}</td>
+    <td class="num" data-label="Interés compradores" style="color:var(--green)">${money(r.intComp)}</td>
+    <td class="num" data-label="Interés financistas" style="color:var(--red)">−${money(r.intFin)}</td>
+    <td class="num" data-label="Ganancia neta"><span class="strong" style="color:${r.neta >= 0 ? 'var(--green)' : 'var(--red)'}">${money(r.neta)}</span></td>
+  </tr>`;
+  const tabla = `<div class="card">
+    <div class="card-head"><h3>Ganancia por mes</h3><span class="hint">${rows.length} mes(es)</span></div>
+    <div class="table-wrap"><table class="tbl">
+      <thead><tr><th>Mes</th><th class="num">Ventas</th><th class="num">Margen autos</th><th class="num">Interés compradores</th><th class="num">Interés financistas</th><th class="num">Ganancia neta</th></tr></thead>
+      <tbody>${rows.map((r) => fila(r, false)).join('')}${fila(tot, true)}</tbody>
+    </table></div>
+    <div class="card-pad"><div class="help">El margen de autos y el interés ganado a compradores se cuentan en el mes en que se vendió el auto. El interés pagado a financistas se cuenta en el mes de vencimiento de cada cuota. La suma de la columna "Ganancia neta" coincide con tu ganancia neta del panel.</div></div>
+  </div>`;
+  return kpis + tabla;
+}
+function buildReporteHTML(rows) {
+  const c = state.config || {};
+  const tot = totalesReporte(rows);
+  const hoy = new Date();
+  const fechaTxt = `${hoy.getDate()} de ${MESES_L[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+  const celda = (txt, align, bold) => `<td style="border:1px solid #999;padding:6px;text-align:${align}${bold ? ';font-weight:800' : ''}">${txt}</td>`;
+  const th = (txt, align) => `<th style="border:1px solid #999;padding:6px;text-align:${align};background:#f0f0f0">${txt}</th>`;
+  const fila = (r) => `<tr>${celda(capMes(r.mes), 'left')}${celda(r.autos, 'center')}${celda(money(r.ventas), 'right')}${celda(money(r.base), 'right')}${celda(money(r.intComp), 'right')}${celda('−' + money(r.intFin), 'right')}${celda('<b>' + money(r.neta) + '</b>', 'right')}</tr>`;
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px;max-width:920px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:10px">
+      <div><div style="font-size:20px;font-weight:800">${esc(c.empresa_nombre || 'Compraventa')}</div>${c.empresa_rut ? `<div style="font-size:12px;color:#555">RUT ${esc(c.empresa_rut)}</div>` : ''}</div>
+      <div style="text-align:right;font-size:12px;color:#555">Generado el ${fechaTxt}</div>
+    </div>
+    <h2 style="font-size:16px;margin:16px 0 12px">Reporte de ganancias por mes</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr>${th('Mes', 'left')}${th('Autos', 'center')}${th('Ventas', 'right')}${th('Margen autos', 'right')}${th('Interés compradores', 'right')}${th('Interés financistas', 'right')}${th('Ganancia neta', 'right')}</tr></thead>
+      <tbody>${rows.map(fila).join('')}</tbody>
+      <tfoot><tr style="background:#f7f7f7">${celda('Total', 'left', true)}${celda(tot.autos, 'center', true)}${celda(money(tot.ventas), 'right', true)}${celda(money(tot.base), 'right', true)}${celda(money(tot.intComp), 'right', true)}${celda('−' + money(tot.intFin), 'right', true)}${celda(money(tot.neta), 'right', true)}</tr></tfoot>
+    </table>
+    <p style="font-size:10px;color:#777;margin-top:14px">El margen de autos y el interés a compradores se contabilizan en el mes de venta del auto; el interés a financistas, en el mes de vencimiento de cada cuota. Documento referencial generado por tu sistema de administración.</p>
+  </div>`;
+}
+function imprimirReporte(html) {
+  const w = window.open('', '_blank');
+  if (!w) { toast('Permite las ventanas emergentes para imprimir/guardar PDF', 'err'); return; }
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Reporte de ganancias</title><style>*{box-sizing:border-box}body{margin:0}@media print{@page{margin:12mm}}</style></head><body>${html}<script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>`);
+  w.document.close();
+}
+
+/* ============================================================
    Promesa de compraventa
 ============================================================ */
 function generarPromesa(v, fin, cuotas) {
@@ -1786,6 +1883,7 @@ window.__app = {
   nuevoAuto: () => openVehiculoForm(null),
   nuevoFinancista: () => openFinancistaForm(null),
   go: (v) => navigate(v),
+  exportarReporte: () => { const rows = reporteMensual(); if (!rows.length) { toast('Aún no hay datos para exportar', 'err'); return; } imprimirReporte(buildReporteHTML(rows)); },
 };
 
 init();
