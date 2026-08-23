@@ -259,6 +259,9 @@ table.tbl tr:hover td{background:var(--surface-2)}
 .form-section{margin-top:8px;margin-bottom:2px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--brand);border-top:1px solid var(--line-2);padding-top:17px}
 .form-section:first-child{border-top:none;padding-top:0}
 .help{font-size:11.5px;color:var(--ink-soft);margin-top:6px}
+.rut-fb{margin-top:5px;font-weight:650;font-size:11.5px}
+.inp-ok{border-color:#79c6a1 !important}
+.inp-bad{border-color:var(--red) !important;box-shadow:0 0 0 3px var(--red-bg) !important}
 .inline-check{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;color:var(--ink-2)}
 .inline-check input{width:17px;height:17px;accent-color:var(--brand)}
 
@@ -590,6 +593,52 @@ function daysUntil(iso) {
 }
 function num(v) { const n = parseFloat(String(v).replace(/\./g, '').replace(',', '.')); return isNaN(n) ? 0 : n; }
 function intOr(v, d = 0) { const n = parseInt(v, 10); return isNaN(n) ? d : n; }
+
+/* ---- RUT chileno: formateo + validación (módulo 11) ---- */
+function cleanRut(v) { return (v || '').toString().replace(/[^0-9kK]/g, '').toUpperCase(); }
+function dvRut(body) {
+  let s = 0, m = 2;
+  for (let i = body.length - 1; i >= 0; i--) { s += parseInt(body[i], 10) * m; m = m === 7 ? 2 : m + 1; }
+  const r = 11 - (s % 11);
+  return r === 11 ? '0' : r === 10 ? 'K' : String(r);
+}
+function formatRut(v) {
+  const c = cleanRut(v);
+  if (!c) return '';
+  if (c.length === 1) return c;
+  const dv = c.slice(-1);
+  let body = c.slice(0, -1).replace(/^0+/, '');
+  if (!body) return dv;
+  let out = '', rev = body.split('').reverse();
+  for (let i = 0; i < rev.length; i++) { out = rev[i] + out; if ((i + 1) % 3 === 0 && i + 1 < rev.length) out = '.' + out; }
+  return out + '-' + dv;
+}
+function rutValido(v) {
+  const c = cleanRut(v);
+  if (c.length < 2) return false;
+  const body = c.slice(0, -1), dv = c.slice(-1);
+  if (!/^\d+$/.test(body)) return false;
+  return dvRut(body) === dv;
+}
+function bindRut(input) {
+  if (!input) return;
+  const fb = document.createElement('div');
+  fb.className = 'help rut-fb';
+  input.parentNode.appendChild(fb);
+  input.setAttribute('inputmode', 'text');
+  input.setAttribute('autocapitalize', 'characters');
+  input.setAttribute('autocorrect', 'off');
+  input.setAttribute('spellcheck', 'false');
+  const upd = (blur) => {
+    const v = input.value.trim();
+    if (!v) { fb.textContent = ''; input.classList.remove('inp-bad', 'inp-ok'); return; }
+    if (rutValido(v)) { fb.textContent = '✓ RUT válido'; fb.style.color = 'var(--green)'; input.classList.remove('inp-bad'); input.classList.add('inp-ok'); }
+    else { fb.textContent = blur ? 'RUT inválido — revisa el dígito verificador' : ''; fb.style.color = 'var(--red)'; input.classList.toggle('inp-bad', !!blur); input.classList.remove('inp-ok'); }
+  };
+  input.addEventListener('input', () => { input.value = formatRut(input.value); upd(false); });
+  input.addEventListener('blur', () => { input.value = formatRut(input.value); upd(true); });
+  if (input.value) { input.value = formatRut(input.value); upd(true); }
+}
 
 function toast(msg, type = '') {
   const t = $('#toast');
@@ -1046,14 +1095,20 @@ function renderConfig() {
   </div>`;
 }
 function bindConfig() {
+  bindRut($('#cfg-empresa_rut'));
+  bindRut($('#cfg-representante_rut'));
   $('#cfg-save').addEventListener('click', async () => {
+    const eRut = $('#cfg-empresa_rut').value.trim();
+    const rRut = $('#cfg-representante_rut').value.trim();
+    if (eRut && !rutValido(eRut)) { toast('El RUT de la empresa no es válido', 'err'); return; }
+    if (rRut && !rutValido(rRut)) { toast('El RUT del representante no es válido', 'err'); return; }
     const payload = {
       id: 1,
       empresa_nombre: $('#cfg-empresa_nombre').value.trim() || null,
-      empresa_rut: $('#cfg-empresa_rut').value.trim() || null,
+      empresa_rut: eRut || null,
       giro: $('#cfg-giro').value.trim() || null,
       representante_nombre: $('#cfg-representante_nombre').value.trim() || null,
-      representante_rut: $('#cfg-representante_rut').value.trim() || null,
+      representante_rut: rRut || null,
       direccion: $('#cfg-direccion').value.trim() || null,
       comuna: $('#cfg-comuna').value.trim() || null,
       ciudad: $('#cfg-ciudad').value.trim() || null,
@@ -1202,6 +1257,7 @@ function openVehiculoForm(veh) {
     <div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="veh-save">${veh ? 'Guardar cambios' : 'Crear vehículo'}</button></div>
   </div>`;
   modal(html, 'lg');
+  bindRut($('#f-comprador_rut'));
 
   const estado = $('#f-estado'), tipoV = $('#f-tipo_venta');
   const syncVisibility = () => {
@@ -1237,6 +1293,8 @@ async function guardarVehiculo(veh, finPrev) {
   if (!modelo) { toast('El modelo es obligatorio', 'err'); return; }
   const estado = $('#f-estado').value;
   const tipo_venta = $('#f-tipo_venta').value || null;
+  const compRut = $('#f-comprador_rut').value.trim();
+  if (estado === 'vendido' && compRut && !rutValido(compRut)) { toast('El RUT del comprador no es válido', 'err'); return; }
   const payload = {
     marca: $('#f-marca').value.trim() || null,
     modelo,
@@ -1457,10 +1515,13 @@ function openFinancistaForm(f) {
     <div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="ff-save">${f ? 'Guardar' : 'Crear'}</button></div>
   </div>`;
   modal(html);
+  bindRut($('#ff-rut'));
   $('#ff-save').addEventListener('click', async () => {
     const nombre = $('#ff-nombre').value.trim();
     if (!nombre) { toast('El nombre es obligatorio', 'err'); return; }
-    const payload = { nombre, rut: $('#ff-rut').value.trim() || null, interes_mensual_pct: num($('#ff-interes').value), telefono: $('#ff-telefono').value.trim() || null, email: $('#ff-email').value.trim() || null, notas: $('#ff-notas').value.trim() || null };
+    const rutV = $('#ff-rut').value.trim();
+    if (rutV && !rutValido(rutV)) { toast('El RUT no es válido', 'err'); return; }
+    const payload = { nombre, rut: rutV || null, interes_mensual_pct: num($('#ff-interes').value), telefono: $('#ff-telefono').value.trim() || null, email: $('#ff-email').value.trim() || null, notas: $('#ff-notas').value.trim() || null };
     const res = f ? await supabase.from('financistas').update(payload).eq('id', f.id) : await supabase.from('financistas').insert(payload);
     if (res.error) { toast('Error: ' + res.error.message, 'err'); return; }
     await loadAll(); closeModal(); renderView(); toast(f ? 'Financista actualizado' : 'Financista creado', 'ok');
