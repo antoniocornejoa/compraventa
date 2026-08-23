@@ -293,6 +293,25 @@ table.tbl tr:hover td{background:#f9fbfe}
 
 </style>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+<script>
+// Diagnóstico / respaldo: si el módulo no arranca, mostramos el login y el error (nunca queda en blanco)
+(function () {
+  function reveal(msg) {
+    try {
+      var l = document.getElementById('login');
+      if (l) l.classList.remove('hidden');
+      if (msg) { var e = document.getElementById('login-error'); if (e) { e.classList.remove('hidden'); e.textContent = msg; } }
+    } catch (_) {}
+  }
+  window.addEventListener('error', function (ev) {
+    if (!window.__appBooted) reveal('No se pudo cargar la app: ' + ((ev && ev.message) || 'error de script') + '. Recarga la página.');
+  });
+  window.addEventListener('unhandledrejection', function (ev) {
+    if (!window.__appBooted) reveal('No se pudo iniciar la app: ' + ((ev && ev.reason && ev.reason.message) || ev.reason || '') + '. Recarga la página.');
+  });
+  setTimeout(function () { if (!window.__appBooted) reveal('La app está tardando en cargar. Revisa tu conexión y recarga la página.'); }, 7000);
+})();
+</script>
 </head>
 <body>
 
@@ -367,13 +386,22 @@ table.tbl tr:hover td{background:#f9fbfe}
 <div id="print-area" class="hidden"></div>
 
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+let createClient;
+try {
+  ({ createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'));
+} catch (e) {
+  try {
+    ({ createClient } = await import('https://esm.sh/@supabase/supabase-js@2'));
+  } catch (e2) {
+    ({ createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js@2'));
+  }
+}
 
 /* ============================================================
    Configuración Supabase
 ============================================================ */
 const SUPABASE_URL = 'https://gtnvrpkfpwywxptxirty.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_zEpq3ik23kGeCr_iiZXK8g_Js064OWY';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0bnZycGtmcHd5d3hwdHhpcnR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjgyNTk5MjMsImV4cCI6MjA4MzgzNTkyM30.Cta0SyC6m0m1kp3-KYzQS5unc9IVp0FaSml0UjTpPgc';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   db: { schema: 'compraventa' },
   auth: { persistSession: true, autoRefreshToken: true },
@@ -508,19 +536,28 @@ function generarCuotasFinancista({ monto, iPct, n, modalidad, fechaInicio }) {
    Autenticación
 ============================================================ */
 async function init() {
-  bindStatic();
-  const { data } = await supabase.auth.getSession();
-  if (data.session) { await onLogin(data.session); }
-  else { showLogin(); }
-  supabase.auth.onAuthStateChange((_e, session) => {
-    if (!session) showLogin();
-  });
+  try {
+    bindStatic();
+    const { data } = await supabase.auth.getSession();
+    if (data && data.session) { await onLogin(data.session); }
+    else { showLogin(); }
+    supabase.auth.onAuthStateChange((_e, session) => {
+      if (!session) showLogin();
+    });
+  } catch (e) {
+    console.error('init', e);
+    showLogin();
+    const el = document.getElementById('login-error');
+    if (el) { el.classList.remove('hidden'); el.textContent = 'Error al iniciar: ' + (e && e.message ? e.message : e); }
+  }
 }
 function showLogin() {
+  window.__appBooted = true;
   $('#app').classList.add('hidden');
   $('#login').classList.remove('hidden');
 }
 async function onLogin(session) {
+  window.__appBooted = true;
   state.user = session.user;
   $('#login').classList.add('hidden');
   $('#app').classList.remove('hidden');
