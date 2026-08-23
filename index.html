@@ -668,11 +668,23 @@ function generarCuotasComprador(valorCuota, n, fechaPrimera) {
   return arr;
 }
 // Cuotas al financista
-function generarCuotasFinancista({ monto, iPct, n, modalidad, fechaInicio }) {
+function generarCuotasFinancista({ monto, iPct, n, modalidad, fechaInicio, totalPagar }) {
   monto = Number(monto) || 0; n = Number(n) || 1;
   const i = (Number(iPct) || 0) / 100;
   const arr = [];
-  if (modalidad === 'cuota_fija') {
+  if (modalidad === 'total_fijo') {
+    // Monto total fijo a devolver, repartido en cuotas iguales
+    const total = Math.round(Number(totalPagar) || 0);
+    const cuotaBase = Math.round(total / n);
+    const capBase = Math.round(monto / n);
+    let accCuota = 0, accCap = 0;
+    for (let k = 1; k <= n; k++) {
+      let cuota, capital;
+      if (k === n) { cuota = total - accCuota; capital = monto - accCap; }
+      else { cuota = cuotaBase; capital = capBase; accCuota += cuota; accCap += capital; }
+      arr.push({ numero: k, monto: cuota, capital, interes: cuota - capital, fecha_vencimiento: addMonths(fechaInicio, k) });
+    }
+  } else if (modalidad === 'cuota_fija') {
     const cuota = cuotaFrancesa(monto, iPct, n);
     let saldo = monto;
     for (let k = 1; k <= n; k++) {
@@ -1545,9 +1557,12 @@ function openFinancistaDetalle(id) {
     const pagadas = cuotas.filter((c) => c.pagada).length;
     const saldo = cuotas.filter((c) => !c.pagada).reduce((a, c) => a + (Number(c.monto) || 0), 0);
     const veh = p.vehiculo_id ? state.vehiculos.find((v) => v.id === p.vehiculo_id) : null;
+    const esTotalP = p.modalidad === 'total_fijo';
+    const tituloP = esTotalP ? `${money(p.monto)} → ${money(p.total_pagar)}` : `${money(p.monto)} · ${(Number(p.interes_mensual_pct) || 0)}% mensual`;
+    const modLabelP = esTotalP ? 'Monto total fijo' : (p.modalidad === 'cuota_fija' ? 'Cuota fija' : 'Interés mensual + capital al final');
     return `<div class="card" style="margin-bottom:14px;box-shadow:none;border:1px solid var(--line)">
       <div class="card-head" style="padding:12px 15px">
-        <div><h3 style="font-size:14px">${money(p.monto)} · ${(Number(p.interes_mensual_pct) || 0)}% mensual</h3><div class="hint">${p.modalidad === 'cuota_fija' ? 'Cuota fija' : 'Interés mensual + capital al final'} · desde ${fmtDate(p.fecha_inicio)}${veh ? ' · ' + esc(veh.marca || '') + ' ' + esc(veh.modelo) : ''}${p.descripcion ? ' · ' + esc(p.descripcion) : ''}</div></div>
+        <div><h3 style="font-size:14px">${tituloP}</h3><div class="hint">${modLabelP} · desde ${fmtDate(p.fecha_inicio)}${veh ? ' · ' + esc(veh.marca || '') + ' ' + esc(veh.modelo) : ''}${p.descripcion ? ' · ' + esc(p.descripcion) : ''}</div></div>
         <div style="text-align:right"><div class="strong" style="color:${saldo > 0 ? 'var(--red)' : 'var(--green)'}">${money(saldo)}</div><div class="hint">${pagadas}/${cuotas.length} pagadas</div></div>
       </div>
       <div class="card-pad">${cuotas.map((c) => cuotaRow(c, 'cuotas_financista')).join('')}
@@ -1604,12 +1619,14 @@ function openPrestamoForm(f, prestamo) {
   <div class="modal-body">
     <div class="form-grid">
       <div class="field"><label>Monto (capital)</label><input id="p-monto" type="number" value="${p.monto ?? ''}" placeholder="0"></div>
-      <div class="field"><label>Interés mensual %</label><input id="p-interes" type="number" step="0.01" value="${p.interes_mensual_pct ?? (f.interes_mensual_pct ?? 0)}"></div>
+      <div class="field" id="p-interes-wrap"><label>Interés mensual %</label><input id="p-interes" type="number" step="0.01" value="${p.interes_mensual_pct ?? (f.interes_mensual_pct ?? 0)}"></div>
+      <div class="field" id="p-total-wrap"><label>Total a devolver</label><input id="p-total" type="number" value="${p.total_pagar ?? ''}" placeholder="0"></div>
       <div class="field"><label>Fecha de inicio</label><input id="p-fecha" type="date" value="${p.fecha_inicio || todayISO()}"></div>
       <div class="field"><label>N° de cuotas</label><input id="p-n" type="number" value="${p.n_cuotas ?? 6}"></div>
       <div class="field"><label>Modalidad</label><select id="p-modalidad">
-        <option value="interes_mensual" ${p.modalidad !== 'cuota_fija' ? 'selected' : ''}>Interés mensual + capital al final</option>
+        <option value="interes_mensual" ${(!p.modalidad || p.modalidad === 'interes_mensual') ? 'selected' : ''}>Interés mensual + capital al final</option>
         <option value="cuota_fija" ${p.modalidad === 'cuota_fija' ? 'selected' : ''}>Cuota fija (amortizada)</option>
+        <option value="total_fijo" ${p.modalidad === 'total_fijo' ? 'selected' : ''}>Monto total fijo a devolver</option>
       </select></div>
       <div class="field"><label>Auto asociado (opcional)</label><select id="p-vehiculo">${vehOpts}</select></div>
       ${editar ? `<div class="field"><label>Estado</label><select id="p-estado"><option value="vigente" ${p.estado !== 'pagado' ? 'selected' : ''}>Vigente</option><option value="pagado" ${p.estado === 'pagado' ? 'selected' : ''}>Pagado</option></select></div>` : ''}
@@ -1620,51 +1637,66 @@ function openPrestamoForm(f, prestamo) {
       <div class="c-item"><div class="l">Total a pagar</div><div class="v" id="pp-total">$0</div></div>
       <div class="c-item"><div class="l">Interés total</div><div class="v" id="pp-int" style="color:var(--red)">$0</div></div>
     </div>
-    <div class="help">${editar ? 'Si cambias monto, interés, cuotas, modalidad o fecha, se regenerará el calendario de cuotas.' : 'Se generará automáticamente el calendario de cuotas con sus fechas de vencimiento.'}</div>
+    <div class="help">${editar ? 'Si cambias el monto, el interés o el total, las cuotas, la modalidad o la fecha, se regenerará el calendario de cuotas.' : 'Se generará automáticamente el calendario de cuotas con sus fechas de vencimiento.'}</div>
   </div>
   <div class="modal-foot">
     <div>${editar ? `<button class="btn btn-danger" id="p-del">Eliminar</button>` : '<span></span>'}</div>
     <div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="p-save">${editar ? 'Guardar cambios' : 'Crear préstamo'}</button></div>
   </div>`;
   modal(html);
+  const syncMod = () => {
+    const tf = $('#p-modalidad').value === 'total_fijo';
+    $('#p-total-wrap').style.display = tf ? '' : 'none';
+    $('#p-interes-wrap').style.display = tf ? 'none' : '';
+  };
   const upd = () => {
+    syncMod();
     const monto = num($('#p-monto').value), iPct = num($('#p-interes').value), n = intOr($('#p-n').value, 1), mod = $('#p-modalidad').value;
-    const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: todayISO() });
+    const totalFijo = num($('#p-total').value);
+    const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: todayISO(), totalPagar: totalFijo });
     const total = cuotas.reduce((a, c) => a + c.monto, 0);
     const inte = cuotas.reduce((a, c) => a + c.interes, 0);
-    $('#pp-cuota').textContent = mod === 'cuota_fija' ? money(cuotaFrancesa(monto, iPct, n)) : money(Math.round(monto * iPct / 100));
+    const cuotaEst = mod === 'total_fijo' ? (n > 0 ? Math.round(totalFijo / n) : 0) : (mod === 'cuota_fija' ? cuotaFrancesa(monto, iPct, n) : Math.round(monto * iPct / 100));
+    $('#pp-cuota').textContent = money(cuotaEst);
     $('#pp-total').textContent = money(total);
     $('#pp-int').textContent = money(inte);
   };
-  ['p-monto', 'p-interes', 'p-n', 'p-modalidad'].forEach((id) => $('#' + id).addEventListener('input', upd));
+  ['p-monto', 'p-interes', 'p-total', 'p-n', 'p-modalidad'].forEach((id) => $('#' + id).addEventListener('input', upd));
   upd();
   if (editar) $('#p-del').addEventListener('click', () => eliminarPrestamo(p.id, f.id));
   $('#p-save').addEventListener('click', async () => {
     const monto = num($('#p-monto').value);
-    if (monto <= 0) { toast('Ingresa el monto del préstamo', 'err'); return; }
-    const iPct = num($('#p-interes').value), n = intOr($('#p-n').value, 1), mod = $('#p-modalidad').value, fecha = $('#p-fecha').value || todayISO();
+    if (monto <= 0) { toast('Ingresa el monto (capital) del préstamo', 'err'); return; }
+    const mod = $('#p-modalidad').value, n = intOr($('#p-n').value, 1), fecha = $('#p-fecha').value || todayISO();
+    const esTotal = mod === 'total_fijo';
+    const totalFijo = esTotal ? num($('#p-total').value) : null;
+    const iPct = esTotal ? 0 : num($('#p-interes').value);
+    if (esTotal) {
+      if (!totalFijo || totalFijo <= 0) { toast('Ingresa el total a devolver', 'err'); return; }
+      if (totalFijo < monto) { toast('El total a devolver no puede ser menor que el capital prestado', 'err'); return; }
+    }
     try {
       if (editar) {
         const estado = $('#p-estado') ? $('#p-estado').value : (p.estado || 'vigente');
-        const planChanged = Number(p.monto) !== monto || Number(p.interes_mensual_pct) !== iPct || Number(p.n_cuotas) !== n || (p.modalidad || 'interes_mensual') !== mod || p.fecha_inicio !== fecha;
+        const planChanged = Number(p.monto) !== monto || Number(p.interes_mensual_pct) !== iPct || Number(p.n_cuotas) !== n || (p.modalidad || 'interes_mensual') !== mod || p.fecha_inicio !== fecha || Number(p.total_pagar || 0) !== Number(totalFijo || 0);
         if (planChanged) {
           const anyPaid = state.cuotasF.some((c) => c.prestamo_id === p.id && c.pagada);
           if (anyPaid && !confirm('Cambiaste el plan del préstamo. Se regenerará el calendario y se perderán los pagos ya registrados de este préstamo. ¿Continuar?')) return;
         }
-        const up = { vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, descripcion: $('#p-desc').value.trim() || null, estado };
+        const up = { vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, total_pagar: esTotal ? totalFijo : null, descripcion: $('#p-desc').value.trim() || null, estado };
         const { error } = await supabase.from('prestamos_financista').update(up).eq('id', p.id);
         if (error) throw error;
         if (planChanged) {
           await supabase.from('cuotas_financista').delete().eq('prestamo_id', p.id);
-          const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha }).map((c) => ({ ...c, prestamo_id: p.id, financista_id: f.id }));
+          const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha, totalPagar: totalFijo }).map((c) => ({ ...c, prestamo_id: p.id, financista_id: f.id }));
           if (cuotas.length) { const { error: e2 } = await supabase.from('cuotas_financista').insert(cuotas); if (e2) throw e2; }
         }
         await loadAll(); toast('Préstamo actualizado', 'ok'); closeModal(); openFinancistaDetalle(f.id); renderView();
       } else {
-        const payload = { financista_id: f.id, vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, descripcion: $('#p-desc').value.trim() || null };
+        const payload = { financista_id: f.id, vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, total_pagar: esTotal ? totalFijo : null, descripcion: $('#p-desc').value.trim() || null };
         const { data: pr, error } = await supabase.from('prestamos_financista').insert(payload).select('id').single();
         if (error) throw error;
-        const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha }).map((c) => ({ ...c, prestamo_id: pr.id, financista_id: f.id }));
+        const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha, totalPagar: totalFijo }).map((c) => ({ ...c, prestamo_id: pr.id, financista_id: f.id }));
         const { error: e2 } = await supabase.from('cuotas_financista').insert(cuotas);
         if (e2) throw e2;
         await loadAll(); toast('Préstamo creado', 'ok'); closeModal(); openFinancistaDetalle(f.id); renderView();
