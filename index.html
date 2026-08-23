@@ -1,0 +1,1524 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compraventa · Administración</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef1f6;
+  --surface:#ffffff;
+  --surface-2:#f7f9fc;
+  --ink:#0f1b2d;
+  --ink-soft:#5a6b82;
+  --line:#e3e8f0;
+  --brand:#1e5eff;
+  --brand-d:#1544c9;
+  --navy:#0f1b2d;
+  --navy-2:#16263d;
+  --green:#0f9d58;
+  --green-bg:#e6f6ed;
+  --red:#e11d48;
+  --red-bg:#fde7ec;
+  --amber:#b7791f;
+  --amber-bg:#fbf1dc;
+  --violet:#6d28d9;
+  --shadow:0 1px 2px rgba(15,27,45,.06),0 8px 24px rgba(15,27,45,.06);
+  --shadow-lg:0 12px 40px rgba(15,27,45,.18);
+  --radius:14px;
+  --radius-s:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:14.5px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit}
+a{color:var(--brand);text-decoration:none}
+.hidden{display:none !important}
+
+/* ---------- Login ---------- */
+.login-wrap{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 600px at 20% -10%,#20375c 0%,#0f1b2d 55%,#0a1322 100%);
+  padding:24px;
+}
+.login-card{
+  width:100%;max-width:400px;background:var(--surface);border-radius:18px;
+  padding:34px 30px;box-shadow:var(--shadow-lg);
+}
+.login-brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.login-brand .logo{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,#1e5eff,#0f9d58);color:#fff;font-size:22px}
+.login-brand h1{font-size:18px;margin:0;letter-spacing:-.2px}
+.login-brand p{margin:0;font-size:12.5px;color:var(--ink-soft)}
+.login-card h2{font-size:16px;margin:6px 0 18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+.field input,.field select,.field textarea{
+  width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-s);
+  font-size:14.5px;background:var(--surface);color:var(--ink);outline:none;transition:border .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
+.field textarea{resize:vertical;min-height:64px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 16px;border-radius:var(--radius-s);border:1px solid transparent;
+  font-weight:600;font-size:14px;cursor:pointer;transition:.15s;white-space:nowrap;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{background:var(--brand-d)}
+.btn-block{width:100%}
+.btn-ghost{background:var(--surface);border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{background:var(--surface-2)}
+.btn-soft{background:var(--surface-2);border-color:var(--line);color:var(--ink-soft)}
+.btn-soft:hover{color:var(--ink)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-success{background:var(--green);color:#fff}
+.btn-sm{padding:6px 11px;font-size:12.5px}
+.btn-xs{padding:4px 9px;font-size:12px;border-radius:8px}
+.login-error{background:var(--red-bg);color:var(--red);padding:9px 12px;border-radius:9px;font-size:13px;margin-bottom:14px}
+
+/* ---------- App shell ---------- */
+.app{display:grid;grid-template-columns:238px 1fr;min-height:100vh}
+.sidebar{background:var(--navy);color:#c7d3e6;display:flex;flex-direction:column;padding:18px 14px;position:sticky;top:0;height:100vh}
+.sidebar .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px}
+.sidebar .brand .logo{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#1e5eff,#0f9d58);color:#fff;font-size:19px}
+.sidebar .brand b{color:#fff;font-size:15px;letter-spacing:-.2px;display:block}
+.sidebar .brand span{font-size:11.5px;color:#8a9ab5}
+.nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.nav button{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  background:transparent;border:none;color:#aeb9ce;padding:10px 12px;border-radius:10px;
+  font-size:14px;font-weight:500;cursor:pointer;transition:.13s;
+}
+.nav button .ic{width:19px;text-align:center;font-size:15px;opacity:.9}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.active{background:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(30,94,255,.35)}
+.sidebar .spacer{flex:1}
+.sidebar .user{border-top:1px solid rgba(255,255,255,.08);padding-top:12px;font-size:12.5px;color:#8a9ab5}
+.sidebar .user b{color:#dbe4f1;display:block;font-size:13px;font-weight:600}
+.sidebar .user button{margin-top:8px}
+
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--line);
+  padding:15px 26px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  position:sticky;top:0;z-index:20;
+}
+.topbar h1{font-size:19px;margin:0;letter-spacing:-.3px}
+.topbar .sub{font-size:12.5px;color:var(--ink-soft);margin-top:1px}
+.topbar-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.content{padding:24px 26px 60px;max-width:1240px;width:100%}
+
+/* ---------- KPI cards ---------- */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.kpi{background:var(--surface);border-radius:var(--radius);padding:16px 17px;box-shadow:var(--shadow);border:1px solid #eef2f8}
+.kpi .k-label{font-size:12px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.4px;display:flex;align-items:center;gap:7px}
+.kpi .k-value{font-size:23px;font-weight:750;margin-top:8px;letter-spacing:-.5px}
+.kpi .k-sub{font-size:12px;color:var(--ink-soft);margin-top:3px}
+.kpi.good .k-value{color:var(--green)}
+.kpi.bad .k-value{color:var(--red)}
+.kpi.hl{background:linear-gradient(135deg,#12305f,#0f1b2d);border:none;color:#fff}
+.kpi.hl .k-label{color:#9db4dd}
+.kpi.hl .k-sub{color:#9db4dd}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.dot.b{background:var(--brand)}.dot.g{background:var(--green)}.dot.r{background:var(--red)}.dot.a{background:var(--amber)}.dot.v{background:var(--violet)}
+
+.section-row{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-top:20px}
+@media(max-width:1050px){.section-row{grid-template-columns:1fr}}
+
+/* ---------- Card / panel ---------- */
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #eef2f8;overflow:hidden}
+.card-head{padding:15px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-head h3{margin:0;font-size:15px}
+.card-head .hint{font-size:12px;color:var(--ink-soft)}
+.card-body{padding:6px 4px}
+.card-pad{padding:16px 18px}
+
+/* ---------- Toolbar / filters ---------- */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.toolbar .search{position:relative;flex:1;min-width:180px;max-width:340px}
+.toolbar .search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:14px;outline:none}
+.toolbar .search input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(30,94,255,.14)}
+.toolbar .search .mag{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-soft);font-size:14px}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{border:none;background:transparent;padding:7px 13px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+.seg button.active{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+
+/* ---------- Table ---------- */
+.table-wrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+table.tbl th{
+  text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft);
+  font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface-2);
+}
+table.tbl td{padding:11px 14px;border-bottom:1px solid #eef2f7;vertical-align:middle}
+table.tbl tbody tr:last-child td{border-bottom:none}
+table.tbl tr:hover td{background:#f9fbfe}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-variant-numeric:tabular-nums}
+.strong{font-weight:700}
+.muted{color:var(--ink-soft)}
+.cell-main{font-weight:650}
+.cell-sub{font-size:12px;color:var(--ink-soft)}
+.row-click{cursor:pointer}
+
+/* ---------- Badges ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap}
+.badge.disp{background:#e7efff;color:#1544c9}
+.badge.res{background:var(--amber-bg);color:var(--amber)}
+.badge.vend{background:var(--green-bg);color:var(--green)}
+.badge.si{background:var(--green-bg);color:var(--green)}
+.badge.no{background:#eef1f6;color:var(--ink-soft)}
+.badge.atras{background:var(--red-bg);color:var(--red)}
+.badge.pend{background:var(--amber-bg);color:var(--amber)}
+.badge.pag{background:var(--green-bg);color:var(--green)}
+.badge.vig{background:#e7efff;color:#1544c9}
+.badge.contado{background:#eae7ff;color:#5b2bd6}
+.badge.fin{background:#e0f2f1;color:#0b7c74}
+.pill{display:inline-block;padding:2px 8px;border-radius:7px;background:var(--surface-2);border:1px solid var(--line);font-size:11.5px;color:var(--ink-soft);font-weight:600}
+
+/* ---------- Empty ---------- */
+.empty{text-align:center;padding:46px 20px;color:var(--ink-soft)}
+.empty .big{font-size:34px;margin-bottom:10px;opacity:.7}
+.empty h4{margin:0 0 4px;color:var(--ink);font-size:15px}
+.empty p{margin:0 0 16px;font-size:13px}
+
+/* ---------- Modal ---------- */
+.modal-back{position:fixed;inset:0;background:rgba(15,27,45,.5);backdrop-filter:blur(2px);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:34px 16px;overflow-y:auto}
+.modal{background:var(--surface);border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:680px;margin:auto;animation:pop .16s ease}
+.modal.lg{max-width:900px}
+.modal.sm{max-width:460px}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
+.modal-head{padding:17px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);border-radius:16px 16px 0 0;z-index:2}
+.modal-head h3{margin:0;font-size:16.5px}
+.modal-head .x{border:none;background:var(--surface-2);width:32px;height:32px;border-radius:9px;font-size:17px;color:var(--ink-soft);cursor:pointer}
+.modal-head .x:hover{background:#e9eef4;color:var(--ink)}
+.modal-body{padding:20px 22px}
+.modal-foot{padding:15px 22px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;align-items:center;position:sticky;bottom:0;background:var(--surface);border-radius:0 0 16px 16px}
+.modal-foot .right{display:flex;gap:10px}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .full{grid-column:1/-1}
+.form-grid .third{grid-column:span 1}
+@media(max-width:560px){.form-grid{grid-template-columns:1fr}}
+.form-section{margin-top:6px;margin-bottom:2px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);border-top:1px dashed var(--line);padding-top:16px}
+.form-section:first-child{border-top:none;padding-top:0}
+.help{font-size:11.5px;color:var(--ink-soft);margin-top:5px}
+.inline-check{display:flex;align-items:center;gap:9px;padding:10px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;cursor:pointer;font-weight:600;font-size:13.5px}
+.inline-check input{width:17px;height:17px;accent-color:var(--brand)}
+
+/* calc preview box */
+.calcbox{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.calcbox .c-item .l{font-size:11.5px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.calcbox .c-item .v{font-size:17px;font-weight:750;margin-top:3px;letter-spacing:-.3px}
+@media(max-width:560px){.calcbox{grid-template-columns:1fr 1fr}}
+
+/* detail view */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 22px}
+.detail-grid .d{padding:8px 0;border-bottom:1px solid #eef2f7}
+.detail-grid .d .l{font-size:11.5px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.detail-grid .d .v{font-size:14.5px;font-weight:600;margin-top:2px}
+.detail-grid .full{grid-column:1/-1}
+
+.mini-stat{display:flex;gap:18px;flex-wrap:wrap;margin:2px 0 4px}
+.mini-stat .ms{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 14px;min-width:120px}
+.mini-stat .ms .l{font-size:11px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.mini-stat .ms .v{font-size:16px;font-weight:750;margin-top:2px}
+
+/* cuota list */
+.cuota-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;background:var(--surface)}
+.cuota-row.pagada{background:var(--green-bg);border-color:#c7ecd4}
+.cuota-row.atras{background:var(--red-bg);border-color:#f6cdd6}
+.cuota-row .n{width:30px;height:30px;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--ink-soft)}
+.cuota-row .info{flex:1;min-width:0}
+.cuota-row .info .m{font-weight:700}
+.cuota-row .info .d{font-size:12px;color:var(--ink-soft)}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;background:var(--navy);color:#fff;padding:11px 18px;border-radius:11px;box-shadow:var(--shadow-lg);font-size:13.5px;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.toast.err{background:var(--red)}
+.toast.ok{background:var(--green)}
+
+.loader{display:grid;place-items:center;padding:60px}
+.spin{width:30px;height:30px;border:3px solid #dfe6f0;border-top-color:var(--brand);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.alert{display:flex;gap:11px;padding:12px 15px;border-radius:11px;font-size:13px;margin-bottom:16px;align-items:flex-start}
+.alert.warn{background:var(--amber-bg);color:#8a5a12}
+.alert.info{background:#e7efff;color:#1c3fa0}
+.alert .i{font-size:16px;line-height:1.2}
+
+/* upcoming list */
+.venc-item{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid #eef2f7}
+.venc-item:last-child{border-bottom:none}
+.venc-item .when{width:52px;text-align:center;flex-shrink:0}
+.venc-item .when .d{font-size:19px;font-weight:800;line-height:1}
+.venc-item .when .m{font-size:10.5px;text-transform:uppercase;color:var(--ink-soft);font-weight:700;letter-spacing:.3px}
+.venc-item .vinfo{flex:1;min-width:0}
+.venc-item .vinfo .t{font-weight:650;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.venc-item .vinfo .s{font-size:12px;color:var(--ink-soft)}
+.venc-item .vamt{text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+
+/* responsive */
+@media(max-width:820px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-100%);transition:transform .2s;width:238px;height:100%}
+  .sidebar.open{transform:none}
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:70}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .content{padding:18px 15px 50px}
+  .topbar{padding:13px 15px}
+  .menu-btn{display:inline-grid !important}
+}
+.menu-btn{display:none;place-items:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:17px;cursor:pointer}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr}}
+
+/* print: promesa */
+@media print{
+  body *{visibility:hidden}
+  #print-area,#print-area *{visibility:visible}
+  #print-area{position:absolute;inset:0;margin:0;padding:0}
+  .no-print{display:none !important}
+}
+
+</style>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login" class="login-wrap hidden">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="logo">🚗</div>
+      <div>
+        <h1>Compraventa</h1>
+        <p>Administración de autos y financiamiento</p>
+      </div>
+    </div>
+    <h2>Ingresar</h2>
+    <div id="login-error" class="login-error hidden"></div>
+    <form id="login-form" autocomplete="on">
+      <div class="field">
+        <label for="l-email">Correo</label>
+        <input id="l-email" type="email" required placeholder="tucorreo@ejemplo.cl" autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="l-pass">Contraseña</label>
+        <input id="l-pass" type="password" required placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" id="login-btn" type="submit">Ingresar</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="app hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">🚗</div>
+      <div><b>Compraventa</b><span id="brand-empresa">Panel de gestión</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-view="panel" class="active"><span class="ic">📊</span> Panel</button>
+      <button data-view="autos"><span class="ic">🚗</span> Autos</button>
+      <button data-view="financistas"><span class="ic">🤝</span> Financistas</button>
+      <button data-view="vencimientos"><span class="ic">📅</span> Vencimientos</button>
+      <button data-view="config"><span class="ic">⚙️</span> Configuración</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="user">
+      <b id="user-name">—</b>
+      <span id="user-email">—</span>
+      <button class="btn btn-soft btn-sm btn-block" id="logout-btn" style="margin-top:10px">Cerrar sesión</button>
+    </div>
+  </aside>
+  <div class="backdrop hidden" id="backdrop"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="menu-btn" id="menu-btn">☰</button>
+        <div>
+          <h1 id="view-title">Panel</h1>
+          <div class="sub" id="view-sub">Resumen general del negocio</div>
+        </div>
+      </div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </header>
+    <div class="content" id="content">
+      <div class="loader"><div class="spin"></div></div>
+    </div>
+  </main>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast" class="toast"></div>
+<div id="print-area" class="hidden"></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+/* ============================================================
+   Configuración Supabase
+============================================================ */
+const SUPABASE_URL = 'https://gtnvrpkfpwywxptxirty.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_zEpq3ik23kGeCr_iiZXK8g_Js064OWY';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  db: { schema: 'compraventa' },
+  auth: { persistSession: true, autoRefreshToken: true },
+});
+
+/* ============================================================
+   Estado
+============================================================ */
+const state = {
+  view: 'panel',
+  user: null,
+  config: null,
+  vehiculos: [],
+  financistas: [],
+  financiamientos: [],
+  prestamos: [],
+  cuotasC: [],   // cuotas comprador
+  cuotasF: [],   // cuotas financista
+  dashboard: null,
+  filtroAutos: 'todos',
+  buscarAutos: '',
+  filtroVenc: 'todos',
+};
+
+/* ============================================================
+   Helpers
+============================================================ */
+const $ = (s, r = document) => r.querySelector(s);
+const $ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clpFmt = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+const money = (n) => clpFmt.format(Math.round(Number(n) || 0));
+const moneyPlain = (n) => new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(Math.round(Number(n) || 0));
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+const MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function parseISO(s) {
+  if (!s) return null;
+  const [y, m, d] = String(s).split('-').map(Number);
+  if (!y) return null;
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+function fmtDate(s) {
+  const d = parseISO(s);
+  if (!d) return '—';
+  return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+}
+function fmtDateLong(s) {
+  const d = parseISO(s);
+  if (!d) return '—';
+  return `${d.getDate()} de ${MESES_L[d.getMonth()]} de ${d.getFullYear()}`;
+}
+function addMonths(iso, k) {
+  const d = parseISO(iso);
+  if (!d) return null;
+  const day = d.getDate();
+  const target = new Date(d.getFullYear(), d.getMonth() + k, 1);
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+  target.setDate(Math.min(day, lastDay));
+  return `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
+}
+function daysUntil(iso) {
+  const d = parseISO(iso);
+  if (!d) return null;
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  return Math.round((d - t) / 86400000);
+}
+function num(v) { const n = parseFloat(String(v).replace(/\./g, '').replace(',', '.')); return isNaN(n) ? 0 : n; }
+function intOr(v, d = 0) { const n = parseInt(v, 10); return isNaN(n) ? d : n; }
+
+function toast(msg, type = '') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+
+/* ============================================================
+   Cálculo de cuotas
+============================================================ */
+function cuotaFrancesa(monto, iPct, n) {
+  monto = Number(monto) || 0; n = Number(n) || 1;
+  const i = (Number(iPct) || 0) / 100;
+  if (n <= 0) return 0;
+  if (i <= 0) return Math.round(monto / n);
+  const c = monto * i / (1 - Math.pow(1 + i, -n));
+  return Math.round(c);
+}
+// Cuotas del comprador: valor fijo por cuota
+function generarCuotasComprador(valorCuota, n, fechaPrimera) {
+  const arr = [];
+  for (let k = 1; k <= n; k++) {
+    arr.push({ numero: k, monto: Math.round(valorCuota), fecha_vencimiento: addMonths(fechaPrimera, k - 1) });
+  }
+  return arr;
+}
+// Cuotas al financista
+function generarCuotasFinancista({ monto, iPct, n, modalidad, fechaInicio }) {
+  monto = Number(monto) || 0; n = Number(n) || 1;
+  const i = (Number(iPct) || 0) / 100;
+  const arr = [];
+  if (modalidad === 'cuota_fija') {
+    const cuota = cuotaFrancesa(monto, iPct, n);
+    let saldo = monto;
+    for (let k = 1; k <= n; k++) {
+      let interes = Math.round(saldo * i);
+      let capital, total;
+      if (k === n) { capital = saldo; total = capital + interes; }
+      else { capital = cuota - interes; total = cuota; }
+      saldo -= capital;
+      arr.push({ numero: k, monto: Math.round(total), capital: Math.round(capital), interes: Math.round(interes), fecha_vencimiento: addMonths(fechaInicio, k) });
+    }
+  } else { // interes_mensual (capital al final)
+    const interesMes = Math.round(monto * i);
+    for (let k = 1; k <= n; k++) {
+      const capital = (k === n) ? monto : 0;
+      arr.push({ numero: k, monto: interesMes + capital, capital, interes: interesMes, fecha_vencimiento: addMonths(fechaInicio, k) });
+    }
+  }
+  return arr;
+}
+
+/* ============================================================
+   Autenticación
+============================================================ */
+async function init() {
+  bindStatic();
+  const { data } = await supabase.auth.getSession();
+  if (data.session) { await onLogin(data.session); }
+  else { showLogin(); }
+  supabase.auth.onAuthStateChange((_e, session) => {
+    if (!session) showLogin();
+  });
+}
+function showLogin() {
+  $('#app').classList.add('hidden');
+  $('#login').classList.remove('hidden');
+}
+async function onLogin(session) {
+  state.user = session.user;
+  $('#login').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  $('#user-email').textContent = session.user.email || '';
+  $('#user-name').textContent = (session.user.user_metadata && session.user.user_metadata.nombre) || 'Antonio';
+  await loadAll();
+  navigate('panel');
+}
+function bindStatic() {
+  $('#login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('#login-btn'); const err = $('#login-error');
+    err.classList.add('hidden');
+    btn.disabled = true; btn.textContent = 'Ingresando…';
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: $('#l-email').value.trim(), password: $('#l-pass').value,
+    });
+    btn.disabled = false; btn.textContent = 'Ingresar';
+    if (error) { err.textContent = 'Correo o contraseña incorrectos.'; err.classList.remove('hidden'); return; }
+    await onLogin(data.session);
+  });
+  $('#logout-btn').addEventListener('click', async () => { await supabase.auth.signOut(); showLogin(); });
+  $('#nav').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-view]'); if (!b) return;
+    navigate(b.dataset.view);
+    $('#sidebar').classList.remove('open'); $('#backdrop').classList.add('hidden');
+  });
+  $('#menu-btn').addEventListener('click', () => { $('#sidebar').classList.add('open'); $('#backdrop').classList.remove('hidden'); });
+  $('#backdrop').addEventListener('click', () => { $('#sidebar').classList.remove('open'); $('#backdrop').classList.add('hidden'); });
+  $('#content').addEventListener('click', onContentClick);
+  $('#content').addEventListener('input', onContentInput);
+}
+
+/* ============================================================
+   Carga de datos
+============================================================ */
+async function loadAll() {
+  try {
+    const [veh, fin, fdir, prest, cc, cf, dash, cfg] = await Promise.all([
+      supabase.from('v_vehiculos').select('*').order('created_at', { ascending: false }),
+      supabase.from('v_financistas').select('*').order('nombre'),
+      supabase.from('financiamientos').select('*'),
+      supabase.from('prestamos_financista').select('*').order('fecha_inicio', { ascending: false }),
+      supabase.from('cuotas_comprador').select('*').order('numero'),
+      supabase.from('cuotas_financista').select('*').order('numero'),
+      supabase.from('v_dashboard').select('*').single(),
+      supabase.from('config').select('*').eq('id', 1).single(),
+    ]);
+    for (const r of [veh, fin, fdir, prest, cc, cf]) if (r.error) throw r.error;
+    state.vehiculos = veh.data || [];
+    state.financistas = fin.data || [];
+    state.financiamientos = fdir.data || [];
+    state.prestamos = prest.data || [];
+    state.cuotasC = cc.data || [];
+    state.cuotasF = cf.data || [];
+    state.dashboard = dash.data || {};
+    state.config = cfg.data || {};
+    if (state.config && state.config.empresa_nombre) $('#brand-empresa').textContent = state.config.empresa_nombre;
+  } catch (e) {
+    console.error(e);
+    toast('Error al cargar datos: ' + (e.message || e), 'err');
+  }
+}
+
+/* ============================================================
+   Navegación
+============================================================ */
+const VIEWS = {
+  panel: { title: 'Panel', sub: 'Resumen general del negocio' },
+  autos: { title: 'Autos', sub: 'Inventario, ventas y ganancias' },
+  financistas: { title: 'Financistas', sub: 'Deuda, pagos y vencimientos' },
+  vencimientos: { title: 'Vencimientos', sub: 'Cuotas por cobrar y por pagar' },
+  config: { title: 'Configuración', sub: 'Datos de la empresa y cuenta' },
+};
+function navigate(view) {
+  state.view = view;
+  $('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  $('#view-title').textContent = VIEWS[view].title;
+  $('#view-sub').textContent = VIEWS[view].sub;
+  $('#topbar-actions').innerHTML = topbarActions(view);
+  renderView();
+}
+function topbarActions(view) {
+  if (view === 'autos') return `<button class="btn btn-primary" onclick="window.__app.nuevoAuto()">＋ Nuevo auto</button>`;
+  if (view === 'financistas') return `<button class="btn btn-primary" onclick="window.__app.nuevoFinancista()">＋ Nuevo financista</button>`;
+  return '';
+}
+function renderView() {
+  const c = $('#content');
+  if (state.view === 'panel') c.innerHTML = renderPanel();
+  else if (state.view === 'autos') c.innerHTML = renderAutos();
+  else if (state.view === 'financistas') c.innerHTML = renderFinancistas();
+  else if (state.view === 'vencimientos') c.innerHTML = renderVencimientos();
+  else if (state.view === 'config') { c.innerHTML = renderConfig(); bindConfig(); }
+}
+
+/* ============================================================
+   Datos derivados
+============================================================ */
+function gananciaNeta() {
+  const d = state.dashboard || {};
+  return (Number(d.ganancia_base_total) || 0) + (Number(d.interes_comprador_total) || 0) - (Number(d.interes_financista_total) || 0);
+}
+function todasVencimientos() {
+  const out = [];
+  for (const c of state.cuotasC) {
+    if (c.pagada) continue;
+    const v = state.vehiculos.find((x) => x.id === c.vehiculo_id);
+    out.push({ tipo: 'cobrar', fecha: c.fecha_vencimiento, monto: c.monto, cuotaId: c.id, tabla: 'cuotas_comprador',
+      titulo: v ? `${v.marca || ''} ${v.modelo}`.trim() : 'Vehículo', sub: `Cuota ${c.numero} · ${v && v.comprador_nombre ? v.comprador_nombre : 'Comprador'}` });
+  }
+  for (const c of state.cuotasF) {
+    if (c.pagada) continue;
+    const f = state.financistas.find((x) => x.id === c.financista_id);
+    out.push({ tipo: 'pagar', fecha: c.fecha_vencimiento, monto: c.monto, cuotaId: c.id, tabla: 'cuotas_financista',
+      titulo: f ? f.nombre : 'Financista', sub: `Cuota ${c.numero} · financista` });
+  }
+  out.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+  return out;
+}
+
+/* ============================================================
+   Vista: PANEL
+============================================================ */
+function renderPanel() {
+  const d = state.dashboard || {};
+  const neta = gananciaNeta();
+  const venc = todasVencimientos();
+  const prox = venc.slice(0, 7);
+  const porCobrar = Number(d.cxc_pendiente) || 0;
+  const porPagar = Number(d.deuda_financistas) || 0;
+  const maxFlujo = Math.max(porCobrar, porPagar, 1);
+  const atrasosCobrar = Number(d.cxc_atrasadas) || 0;
+  const atrasosPagar = Number(d.deuda_financistas_atrasadas) || 0;
+
+  const kpis = `
+  <div class="kpi-grid">
+    <div class="kpi hl">
+      <div class="k-label"><span class="dot g"></span> Ganancia neta estimada</div>
+      <div class="k-value">${money(neta)}</div>
+      <div class="k-sub">Margen autos + interés ganado − interés pagado</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label"><span class="dot b"></span> Autos en stock</div>
+      <div class="k-value">${d.autos_stock || 0}</div>
+      <div class="k-sub">Inventario: ${money(d.valor_inventario)}</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label"><span class="dot v"></span> Vendidos</div>
+      <div class="k-value">${d.autos_vendidos || 0}</div>
+      <div class="k-sub">Ventas: ${money(d.ventas_totales)}</div>
+    </div>
+    <div class="kpi good">
+      <div class="k-label"><span class="dot g"></span> Margen por autos</div>
+      <div class="k-value">${money(d.ganancia_base_total)}</div>
+      <div class="k-sub">Precio venta − costo</div>
+    </div>
+  </div>`;
+
+  const flujo = `
+  <div class="card">
+    <div class="card-head"><h3>Flujo de cuotas</h3><span class="hint">saldos pendientes</span></div>
+    <div class="card-pad">
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+          <span class="strong" style="color:var(--green)">Por cobrar (compradores)</span>
+          <span class="strong mono">${money(porCobrar)}</span>
+        </div>
+        <div style="height:12px;background:var(--surface-2);border-radius:8px;overflow:hidden"><div style="height:100%;width:${(porCobrar / maxFlujo * 100).toFixed(1)}%;background:var(--green);border-radius:8px"></div></div>
+        ${atrasosCobrar ? `<div class="help" style="color:var(--red);margin-top:5px">⚠ ${atrasosCobrar} cuota(s) atrasada(s)</div>` : ''}
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+          <span class="strong" style="color:var(--red)">Por pagar (financistas)</span>
+          <span class="strong mono">${money(porPagar)}</span>
+        </div>
+        <div style="height:12px;background:var(--surface-2);border-radius:8px;overflow:hidden"><div style="height:100%;width:${(porPagar / maxFlujo * 100).toFixed(1)}%;background:var(--red);border-radius:8px"></div></div>
+        ${atrasosPagar ? `<div class="help" style="color:var(--red);margin-top:5px">⚠ ${atrasosPagar} cuota(s) atrasada(s)</div>` : ''}
+      </div>
+      <div style="margin-top:18px;border-top:1px dashed var(--line);padding-top:14px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--brand);margin-bottom:10px">Desglose de la ganancia</div>
+        ${desgloseRow('Margen por autos vendidos', d.ganancia_base_total, 'g')}
+        ${desgloseRow('Interés ganado a compradores', d.interes_comprador_total, 'g')}
+        ${desgloseRow('Interés pagado a financistas', -(Number(d.interes_financista_total) || 0), 'r')}
+        <div class="venc-item" style="border-top:1px solid var(--line);margin-top:4px">
+          <div class="vinfo"><div class="t strong">Ganancia neta estimada</div></div>
+          <div class="vamt" style="color:${neta >= 0 ? 'var(--green)' : 'var(--red)'};font-size:16px">${money(neta)}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  const proximos = `
+  <div class="card">
+    <div class="card-head"><h3>Próximos vencimientos</h3><span class="hint">${venc.length} pendientes</span></div>
+    <div class="card-pad">
+      ${prox.length ? prox.map(vencItem).join('') : `<div class="empty" style="padding:24px"><div class="big">📅</div><p>Sin cuotas pendientes.</p></div>`}
+      ${venc.length > 7 ? `<button class="btn btn-soft btn-sm btn-block" style="margin-top:10px" onclick="window.__app.go('vencimientos')">Ver todos (${venc.length})</button>` : ''}
+    </div>
+  </div>`;
+
+  return kpis + `<div class="section-row">${flujo}${proximos}</div>`;
+}
+function desgloseRow(label, val, color) {
+  val = Number(val) || 0;
+  return `<div class="venc-item"><div class="vinfo"><div class="t" style="font-weight:600">${label}</div></div><div class="vamt" style="color:${color === 'g' ? 'var(--green)' : color === 'r' ? 'var(--red)' : 'inherit'}">${val < 0 ? '−' : ''}${money(Math.abs(val))}</div></div>`;
+}
+function vencItem(v) {
+  const d = parseISO(v.fecha);
+  const dd = daysUntil(v.fecha);
+  const atras = dd !== null && dd < 0;
+  const sub = atras ? `Atrasada ${Math.abs(dd)}d` : dd === 0 ? 'Vence hoy' : `En ${dd}d`;
+  return `<div class="venc-item">
+    <div class="when"><div class="d" style="${atras ? 'color:var(--red)' : ''}">${d ? String(d.getDate()).padStart(2, '0') : '--'}</div><div class="m">${d ? MESES[d.getMonth()] : ''}</div></div>
+    <div class="vinfo"><div class="t">${esc(v.titulo)}</div><div class="s">${esc(v.sub)} · <span style="color:${atras ? 'var(--red)' : 'var(--ink-soft)'}">${sub}</span></div></div>
+    <div class="vamt" style="color:${v.tipo === 'cobrar' ? 'var(--green)' : 'var(--red)'}">${v.tipo === 'cobrar' ? '+' : '−'}${money(v.monto)}</div>
+  </div>`;
+}
+
+/* ============================================================
+   Vista: AUTOS
+============================================================ */
+function renderAutos() {
+  let list = state.vehiculos.slice();
+  const f = state.filtroAutos;
+  if (f === 'stock') list = list.filter((v) => v.estado !== 'vendido');
+  else if (f === 'vendido') list = list.filter((v) => v.estado === 'vendido');
+  else if (f === 'financiado') list = list.filter((v) => v.tipo_venta === 'financiamiento_directo');
+  else if (f === 'sintransf') list = list.filter((v) => v.estado === 'vendido' && !v.transferido);
+  const q = state.buscarAutos.trim().toLowerCase();
+  if (q) list = list.filter((v) => `${v.marca || ''} ${v.modelo || ''} ${v.patente || ''} ${v.comprador_nombre || ''}`.toLowerCase().includes(q));
+
+  const toolbar = `
+  <div class="toolbar">
+    <div class="search"><span class="mag">🔎</span><input id="buscar-autos" placeholder="Buscar marca, modelo, patente o comprador…" value="${esc(state.buscarAutos)}"></div>
+    <div class="seg">
+      ${['todos:Todos', 'stock:En stock', 'vendido:Vendidos', 'financiado:Financiados', 'sintransf:Sin transferir'].map((o) => {
+        const [k, l] = o.split(':'); return `<button data-act="filtro-autos" data-f="${k}" class="${f === k ? 'active' : ''}">${l}</button>`;
+      }).join('')}
+    </div>
+  </div>`;
+
+  if (!list.length) {
+    return toolbar + `<div class="card"><div class="empty"><div class="big">🚗</div><h4>${state.vehiculos.length ? 'Sin resultados' : 'Aún no hay autos'}</h4><p>${state.vehiculos.length ? 'Prueba con otro filtro o búsqueda.' : 'Agrega tu primer vehículo para empezar a registrar compras y ventas.'}</p>${state.vehiculos.length ? '' : '<button class="btn btn-primary" onclick="window.__app.nuevoAuto()">＋ Nuevo auto</button>'}</div></div>`;
+  }
+
+  const rows = list.map((v) => {
+    const estadoBadge = v.estado === 'vendido' ? '<span class="badge vend">Vendido</span>' : v.estado === 'reservado' ? '<span class="badge res">Reservado</span>' : '<span class="badge disp">Disponible</span>';
+    const transf = v.estado === 'vendido' ? (v.transferido ? '<span class="badge si">✓ Transferido</span>' : '<span class="badge no">Pendiente</span>') : '<span class="muted">—</span>';
+    const tipoV = v.tipo_venta === 'financiamiento_directo' ? '<span class="badge fin">Financiado</span>' : v.tipo_venta === 'contado' ? '<span class="badge contado">Contado</span>' : '';
+    const gan = v.ganancia_base != null ? v.ganancia_base : null;
+    const ganTxt = gan === null ? '<span class="muted">—</span>' : `<span class="strong" style="color:${gan >= 0 ? 'var(--green)' : 'var(--red)'}">${money(gan)}</span>`;
+    let cuotasTxt = '<span class="muted">—</span>';
+    if (v.tipo_venta === 'financiamiento_directo' && v.cuotas_totales) {
+      const at = v.cuotas_atrasadas ? ` <span class="badge atras">${v.cuotas_atrasadas} atr.</span>` : '';
+      cuotasTxt = `<span class="mono">${v.cuotas_pagadas}/${v.cuotas_totales}</span>${at}`;
+    }
+    return `<tr class="row-click" data-act="veh-detail" data-id="${v.id}">
+      <td><div class="cell-main">${esc(v.marca || '')} ${esc(v.modelo)}</div><div class="cell-sub">${v.anio || '—'} · ${v.kilometros != null ? moneyPlain(v.kilometros) + ' km' : '— km'}${v.patente ? ' · ' + esc(v.patente) : ''}</div></td>
+      <td>${estadoBadge}${tipoV ? ' ' + tipoV : ''}</td>
+      <td><div>${v.comprador_nombre ? esc(v.comprador_nombre) : '<span class="muted">—</span>'}</div><div class="cell-sub">${v.fecha_venta ? fmtDate(v.fecha_venta) : ''}</div></td>
+      <td class="num">${money(v.costo_total)}</td>
+      <td class="num">${v.precio_venta != null ? money(v.precio_venta) : '<span class="muted">—</span>'}</td>
+      <td class="num">${ganTxt}</td>
+      <td>${cuotasTxt}</td>
+      <td>${transf}</td>
+    </tr>`;
+  }).join('');
+
+  return toolbar + `<div class="card"><div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Vehículo</th><th>Estado</th><th>Comprador</th><th class="num">Costo</th><th class="num">Venta</th><th class="num">Ganancia</th><th>Cuotas</th><th>Transf.</th></tr></thead>
+    <tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ============================================================
+   Vista: FINANCISTAS
+============================================================ */
+function renderFinancistas() {
+  if (!state.financistas.length) {
+    return `<div class="card"><div class="empty"><div class="big">🤝</div><h4>Aún no hay financistas</h4><p>Registra a las personas que te financian para llevar el control de la deuda, los intereses y los vencimientos.</p><button class="btn btn-primary" onclick="window.__app.nuevoFinancista()">＋ Nuevo financista</button></div></div>`;
+  }
+  const totDeuda = state.financistas.reduce((a, f) => a + (Number(f.deuda_pendiente) || 0), 0);
+  const totInteres = state.financistas.reduce((a, f) => a + (Number(f.interes_total) || 0), 0);
+  const cards = state.financistas.map((f) => {
+    const prox = f.proxima_venc ? fmtDate(f.proxima_venc) : '—';
+    const atr = f.cuotas_atrasadas ? `<span class="badge atras">${f.cuotas_atrasadas} atrasada(s)</span>` : '';
+    return `<tr class="row-click" data-act="fin-detail" data-id="${f.id}">
+      <td><div class="cell-main">${esc(f.nombre)}</div><div class="cell-sub">${f.rut ? esc(f.rut) + ' · ' : ''}${f.telefono ? esc(f.telefono) : ''}</div></td>
+      <td class="num"><span class="pill">${(Number(f.interes_mensual_pct) || 0)}% mensual</span></td>
+      <td class="num">${money(f.capital_prestado)}</td>
+      <td class="num"><span class="strong" style="color:${f.deuda_pendiente > 0 ? 'var(--red)' : 'var(--green)'}">${money(f.deuda_pendiente)}</span></td>
+      <td class="num">${money(f.deuda_pagada)}</td>
+      <td>${prox} ${atr}</td>
+    </tr>`;
+  }).join('');
+  const resumen = `<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
+    <div class="kpi bad"><div class="k-label"><span class="dot r"></span> Deuda total pendiente</div><div class="k-value">${money(totDeuda)}</div></div>
+    <div class="kpi"><div class="k-label"><span class="dot a"></span> Interés total pactado</div><div class="k-value">${money(totInteres)}</div></div>
+    <div class="kpi"><div class="k-label"><span class="dot b"></span> Financistas</div><div class="k-value">${state.financistas.length}</div></div>
+  </div>`;
+  return resumen + `<div class="card"><div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Financista</th><th class="num">Interés</th><th class="num">Capital prestado</th><th class="num">Debemos</th><th class="num">Pagado</th><th>Próx. venc.</th></tr></thead>
+    <tbody>${cards}</tbody></table></div></div>`;
+}
+
+/* ============================================================
+   Vista: VENCIMIENTOS
+============================================================ */
+function renderVencimientos() {
+  let list = todasVencimientos();
+  const f = state.filtroVenc;
+  if (f === 'cobrar') list = list.filter((v) => v.tipo === 'cobrar');
+  else if (f === 'pagar') list = list.filter((v) => v.tipo === 'pagar');
+  else if (f === 'atrasadas') list = list.filter((v) => { const d = daysUntil(v.fecha); return d !== null && d < 0; });
+
+  const toolbar = `<div class="toolbar"><div class="seg">
+    ${['todos:Todas', 'cobrar:Por cobrar', 'pagar:Por pagar', 'atrasadas:Atrasadas'].map((o) => { const [k, l] = o.split(':'); return `<button data-act="filtro-venc" data-f="${k}" class="${state.filtroVenc === k ? 'active' : ''}">${l}</button>`; }).join('')}
+  </div></div>`;
+
+  if (!list.length) return toolbar + `<div class="card"><div class="empty"><div class="big">✅</div><h4>Sin vencimientos</h4><p>No hay cuotas pendientes en este filtro.</p></div></div>`;
+
+  const rows = list.map((v) => {
+    const dd = daysUntil(v.fecha);
+    const atras = dd !== null && dd < 0;
+    const estado = atras ? `<span class="badge atras">Atrasada ${Math.abs(dd)}d</span>` : dd === 0 ? `<span class="badge pend">Hoy</span>` : `<span class="badge vig">En ${dd}d</span>`;
+    return `<tr>
+      <td><div class="cell-main">${fmtDate(v.fecha)}</div></td>
+      <td>${v.tipo === 'cobrar' ? '<span class="badge si">▲ Por cobrar</span>' : '<span class="badge atras">▼ Por pagar</span>'}</td>
+      <td><div>${esc(v.titulo)}</div><div class="cell-sub">${esc(v.sub)}</div></td>
+      <td class="num strong" style="color:${v.tipo === 'cobrar' ? 'var(--green)' : 'var(--red)'}">${money(v.monto)}</td>
+      <td>${estado}</td>
+      <td class="num"><button class="btn btn-success btn-xs" data-act="pagar-cuota" data-tabla="${v.tabla}" data-id="${v.cuotaId}">Registrar pago</button></td>
+    </tr>`;
+  }).join('');
+  return toolbar + `<div class="card"><div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Vence</th><th>Tipo</th><th>Detalle</th><th class="num">Monto</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ============================================================
+   Vista: CONFIG
+============================================================ */
+function renderConfig() {
+  const c = state.config || {};
+  return `<div style="max-width:760px">
+    <div class="alert info"><span class="i">ℹ️</span><div>Estos datos identifican a tu empresa en el documento de <b>promesa de compraventa</b>. Complétalos una vez y se usarán en todos los documentos.</div></div>
+    <div class="card"><div class="card-head"><h3>Datos de la empresa / vendedor</h3></div>
+      <div class="card-pad">
+        <div class="form-grid">
+          <div class="full"><label class="field-l">Nombre o razón social</label><div class="field"><input id="cfg-empresa_nombre" value="${esc(c.empresa_nombre)}" placeholder="Ej: Automotora Grupo Motor SpA"></div></div>
+          <div class="field"><label>RUT empresa</label><input id="cfg-empresa_rut" value="${esc(c.empresa_rut)}" placeholder="76.xxx.xxx-x"></div>
+          <div class="field"><label>Giro</label><input id="cfg-giro" value="${esc(c.giro)}" placeholder="Compraventa de vehículos"></div>
+          <div class="field"><label>Representante legal</label><input id="cfg-representante_nombre" value="${esc(c.representante_nombre)}" placeholder="Nombre completo"></div>
+          <div class="field"><label>RUT representante</label><input id="cfg-representante_rut" value="${esc(c.representante_rut)}" placeholder="12.345.678-9"></div>
+          <div class="field"><label>Dirección</label><input id="cfg-direccion" value="${esc(c.direccion)}" placeholder="Calle y número"></div>
+          <div class="field"><label>Comuna</label><input id="cfg-comuna" value="${esc(c.comuna)}" placeholder="Comuna"></div>
+          <div class="field"><label>Ciudad</label><input id="cfg-ciudad" value="${esc(c.ciudad || 'Santiago')}"></div>
+          <div class="field"><label>Teléfono</label><input id="cfg-telefono" value="${esc(c.telefono)}" placeholder="+56 9 ..."></div>
+          <div class="field"><label>Email</label><input id="cfg-email" value="${esc(c.email)}" placeholder="contacto@empresa.cl"></div>
+        </div>
+        <div style="margin-top:14px"><button class="btn btn-primary" id="cfg-save">Guardar datos</button></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px"><div class="card-head"><h3>Cuenta y seguridad</h3></div>
+      <div class="card-pad">
+        <p class="muted" style="margin-top:0">Sesión iniciada como <b>${esc(state.user && state.user.email)}</b>.</p>
+        <div class="form-grid">
+          <div class="field"><label>Nueva contraseña</label><input id="cfg-pass1" type="password" placeholder="Mínimo 6 caracteres"></div>
+          <div class="field"><label>Repetir contraseña</label><input id="cfg-pass2" type="password" placeholder="Repite la contraseña"></div>
+        </div>
+        <button class="btn btn-ghost" id="cfg-pass-save">Cambiar contraseña</button>
+      </div>
+    </div>
+  </div>`;
+}
+function bindConfig() {
+  $('#cfg-save').addEventListener('click', async () => {
+    const payload = {
+      id: 1,
+      empresa_nombre: $('#cfg-empresa_nombre').value.trim() || null,
+      empresa_rut: $('#cfg-empresa_rut').value.trim() || null,
+      giro: $('#cfg-giro').value.trim() || null,
+      representante_nombre: $('#cfg-representante_nombre').value.trim() || null,
+      representante_rut: $('#cfg-representante_rut').value.trim() || null,
+      direccion: $('#cfg-direccion').value.trim() || null,
+      comuna: $('#cfg-comuna').value.trim() || null,
+      ciudad: $('#cfg-ciudad').value.trim() || null,
+      telefono: $('#cfg-telefono').value.trim() || null,
+      email: $('#cfg-email').value.trim() || null,
+    };
+    const { error } = await supabase.from('config').upsert(payload, { onConflict: 'id' });
+    if (error) { toast('Error al guardar: ' + error.message, 'err'); return; }
+    state.config = { ...state.config, ...payload };
+    $('#brand-empresa').textContent = payload.empresa_nombre || 'Panel de gestión';
+    toast('Datos guardados', 'ok');
+  });
+  $('#cfg-pass-save').addEventListener('click', async () => {
+    const p1 = $('#cfg-pass1').value, p2 = $('#cfg-pass2').value;
+    if (p1.length < 6) { toast('La contraseña debe tener al menos 6 caracteres', 'err'); return; }
+    if (p1 !== p2) { toast('Las contraseñas no coinciden', 'err'); return; }
+    const { error } = await supabase.auth.updateUser({ password: p1 });
+    if (error) { toast('Error: ' + error.message, 'err'); return; }
+    $('#cfg-pass1').value = ''; $('#cfg-pass2').value = '';
+    toast('Contraseña actualizada', 'ok');
+  });
+}
+
+/* ============================================================
+   Delegación de eventos
+============================================================ */
+function onContentInput(e) {
+  if (e.target.id === 'buscar-autos') { state.buscarAutos = e.target.value; /* re-render sin perder foco */ scheduleAutosRerender(); }
+}
+let _autosT;
+function scheduleAutosRerender() {
+  clearTimeout(_autosT);
+  _autosT = setTimeout(() => {
+    const val = state.buscarAutos, pos = document.activeElement === $('#buscar-autos');
+    $('#content').innerHTML = renderAutos();
+    if (pos) { const inp = $('#buscar-autos'); if (inp) { inp.focus(); inp.setSelectionRange(val.length, val.length); } }
+  }, 180);
+}
+function onContentClick(e) {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act;
+  if (act === 'filtro-autos') { state.filtroAutos = el.dataset.f; renderView(); }
+  else if (act === 'filtro-venc') { state.filtroVenc = el.dataset.f; renderView(); }
+  else if (act === 'veh-detail') openVehiculoDetalle(el.dataset.id);
+  else if (act === 'fin-detail') openFinancistaDetalle(el.dataset.id);
+  else if (act === 'pagar-cuota') pagarCuota(el.dataset.tabla, el.dataset.id, true);
+}
+
+/* ============================================================
+   MODAL
+============================================================ */
+function modal(html, size = '') {
+  const root = $('#modal-root');
+  root.innerHTML = `<div class="modal-back"><div class="modal ${size}">${html}</div></div>`;
+  const back = $('.modal-back', root);
+  back.addEventListener('mousedown', (e) => { if (e.target === back) closeModal(); });
+  $('[data-close]', root).forEach((b) => b.addEventListener('click', closeModal));
+  document.addEventListener('keydown', escClose);
+  return root;
+}
+function closeModal() { $('#modal-root').innerHTML = ''; document.removeEventListener('keydown', escClose); }
+function escClose(e) { if (e.key === 'Escape') closeModal(); }
+
+/* ============================================================
+   MODAL: Auto (crear / editar)
+============================================================ */
+function selectFinancistas(sel) {
+  return `<option value="">— Ninguno —</option>` + state.financistas.map((f) => `<option value="${f.id}" ${sel === f.id ? 'selected' : ''}>${esc(f.nombre)}</option>`).join('');
+}
+function openVehiculoForm(veh) {
+  const v = veh || {};
+  const fin = veh ? state.financiamientos.find((x) => x.vehiculo_id === veh.id) : null;
+  const isVend = v.estado === 'vendido';
+  const html = `
+  <div class="modal-head"><h3>${veh ? 'Editar vehículo' : 'Nuevo vehículo'}</h3><button class="x" data-close>×</button></div>
+  <div class="modal-body">
+    <form id="veh-form">
+      <div class="form-section">Datos del vehículo</div>
+      <div class="form-grid">
+        <div class="field"><label>Marca</label><input id="f-marca" value="${esc(v.marca)}" placeholder="Toyota"></div>
+        <div class="field"><label>Modelo *</label><input id="f-modelo" required value="${esc(v.modelo)}" placeholder="Yaris"></div>
+        <div class="field"><label>Año</label><input id="f-anio" type="number" value="${v.anio ?? ''}" placeholder="2019"></div>
+        <div class="field"><label>Kilómetros</label><input id="f-km" type="number" value="${v.kilometros ?? ''}" placeholder="45000"></div>
+        <div class="field"><label>Patente</label><input id="f-patente" value="${esc(v.patente)}" placeholder="ABCD12" style="text-transform:uppercase"></div>
+        <div class="field"><label>Color</label><input id="f-color" value="${esc(v.color)}" placeholder="Gris"></div>
+        <div class="field"><label>Combustible</label><input id="f-combustible" value="${esc(v.combustible)}" placeholder="Bencina"></div>
+        <div class="field"><label>Transmisión</label><input id="f-transmision" value="${esc(v.transmision)}" placeholder="Manual / Automática"></div>
+      </div>
+
+      <div class="form-section">Compra</div>
+      <div class="form-grid">
+        <div class="field"><label>Fecha de compra</label><input id="f-fecha_compra" type="date" value="${v.fecha_compra || ''}"></div>
+        <div class="field"><label>Precio de compra</label><input id="f-precio_compra" type="number" value="${v.precio_compra ?? ''}" placeholder="0"></div>
+        <div class="field"><label>Gastos (reparaciones, etc.)</label><input id="f-gastos" type="number" value="${v.gastos ?? 0}" placeholder="0"></div>
+        <div class="field"><label>Financiado por (financista)</label><select id="f-financista">${selectFinancistas(v.financista_id)}</select></div>
+      </div>
+
+      <div class="form-section">Estado y venta</div>
+      <div class="form-grid">
+        <div class="field"><label>Estado</label>
+          <select id="f-estado"><option value="disponible" ${v.estado === 'disponible' || !v.estado ? 'selected' : ''}>Disponible</option><option value="reservado" ${v.estado === 'reservado' ? 'selected' : ''}>Reservado</option><option value="vendido" ${isVend ? 'selected' : ''}>Vendido</option></select>
+        </div>
+        <div class="field"><label>Tipo de venta</label>
+          <select id="f-tipo_venta"><option value="">—</option><option value="contado" ${v.tipo_venta === 'contado' ? 'selected' : ''}>Contado</option><option value="financiamiento_directo" ${v.tipo_venta === 'financiamiento_directo' ? 'selected' : ''}>Financiamiento directo</option></select>
+        </div>
+      </div>
+      <div id="venta-box" class="${isVend ? '' : 'hidden'}">
+        <div class="form-grid">
+          <div class="field"><label>Fecha de venta</label><input id="f-fecha_venta" type="date" value="${v.fecha_venta || ''}"></div>
+          <div class="field"><label>Precio de venta</label><input id="f-precio_venta" type="number" value="${v.precio_venta ?? ''}" placeholder="0"></div>
+          <div class="field full"><label>Nombre del comprador</label><input id="f-comprador_nombre" value="${esc(v.comprador_nombre)}" placeholder="Nombre completo"></div>
+          <div class="field"><label>RUT comprador</label><input id="f-comprador_rut" value="${esc(v.comprador_rut)}" placeholder="12.345.678-9"></div>
+          <div class="field"><label>Teléfono comprador</label><input id="f-comprador_telefono" value="${esc(v.comprador_telefono)}" placeholder="+56 9 ..."></div>
+          <div class="field"><label>Email comprador</label><input id="f-comprador_email" value="${esc(v.comprador_email)}"></div>
+          <div class="field"><label>Comuna comprador</label><input id="f-comprador_comuna" value="${esc(v.comprador_comuna)}"></div>
+          <div class="field full"><label>Dirección comprador</label><input id="f-comprador_direccion" value="${esc(v.comprador_direccion)}"></div>
+        </div>
+        <label class="inline-check" style="margin-top:4px"><input type="checkbox" id="f-transferido" ${v.transferido ? 'checked' : ''}> Vehículo transferido en el Registro Civil</label>
+        <div class="field ${v.transferido ? '' : 'hidden'}" id="transf-fecha-box" style="margin-top:12px"><label>Fecha de transferencia</label><input id="f-fecha_transferencia" type="date" value="${v.fecha_transferencia || ''}"></div>
+      </div>
+
+      <div id="fin-box" class="${v.tipo_venta === 'financiamiento_directo' ? '' : 'hidden'}">
+        <div class="form-section">Financiamiento directo — plan de cuotas</div>
+        <div class="form-grid">
+          <div class="field"><label>Pie (pago inicial)</label><input id="f-pie" type="number" value="${fin ? fin.pie : 0}" placeholder="0"></div>
+          <div class="field"><label>Interés mensual %</label><input id="f-fin_interes" type="number" step="0.01" value="${fin ? fin.interes_mensual_pct : 0}" placeholder="0"></div>
+          <div class="field"><label>N° de cuotas</label><input id="f-fin_n" type="number" value="${fin ? fin.n_cuotas : 12}" placeholder="12"></div>
+          <div class="field"><label>Fecha primera cuota</label><input id="f-fin_fecha" type="date" value="${fin ? fin.fecha_primera_cuota : ''}"></div>
+          <div class="field"><label>Valor de cada cuota</label><input id="f-fin_cuota" type="number" value="${fin ? fin.valor_cuota : ''}" placeholder="se calcula solo"></div>
+          <div class="field" style="display:flex;align-items:flex-end"><button type="button" class="btn btn-soft btn-block" id="f-fin-calc">↻ Calcular cuota sugerida</button></div>
+        </div>
+        <div class="calcbox" id="fin-preview">
+          <div class="c-item"><div class="l">Monto financiado</div><div class="v" id="pv-fin">$0</div></div>
+          <div class="c-item"><div class="l">Total a pagar</div><div class="v" id="pv-total">$0</div></div>
+          <div class="c-item"><div class="l">Interés total</div><div class="v" id="pv-int" style="color:var(--green)">$0</div></div>
+        </div>
+        ${fin ? '<div class="help">Si cambias el plan (cuotas, valor, fecha o pie), las cuotas se regenerarán al guardar.</div>' : ''}
+      </div>
+
+      <div class="form-section">Notas</div>
+      <div class="field"><textarea id="f-notas" placeholder="Observaciones internas…">${esc(v.notas)}</textarea></div>
+    </form>
+  </div>
+  <div class="modal-foot">
+    <div>${veh ? `<button class="btn btn-danger" id="veh-del">Eliminar</button>` : '<span></span>'}</div>
+    <div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="veh-save">${veh ? 'Guardar cambios' : 'Crear vehículo'}</button></div>
+  </div>`;
+  modal(html, 'lg');
+
+  const estado = $('#f-estado'), tipoV = $('#f-tipo_venta');
+  const syncVisibility = () => {
+    $('#venta-box').classList.toggle('hidden', estado.value !== 'vendido');
+    $('#fin-box').classList.toggle('hidden', tipoV.value !== 'financiamiento_directo');
+    updateFinPreview();
+  };
+  estado.addEventListener('change', () => { if (estado.value === 'vendido' && !$('#f-fecha_venta').value) $('#f-fecha_venta').value = todayISO(); syncVisibility(); });
+  tipoV.addEventListener('change', syncVisibility);
+  $('#f-transferido').addEventListener('change', (e) => { $('#transf-fecha-box').classList.toggle('hidden', !e.target.checked); if (e.target.checked && !$('#f-fecha_transferencia').value) $('#f-fecha_transferencia').value = todayISO(); });
+  ['f-precio_venta', 'f-pie', 'f-fin_cuota', 'f-fin_n'].forEach((id) => $('#' + id).addEventListener('input', updateFinPreview));
+  $('#f-fin-calc').addEventListener('click', () => {
+    const mf = num($('#f-precio_venta').value) - num($('#f-pie').value);
+    const c = cuotaFrancesa(mf, num($('#f-fin_interes').value), intOr($('#f-fin_n').value, 1));
+    $('#f-fin_cuota').value = c; updateFinPreview();
+  });
+  function updateFinPreview() {
+    const mf = num($('#f-precio_venta').value) - num($('#f-pie').value);
+    const n = intOr($('#f-fin_n').value, 0);
+    const vc = num($('#f-fin_cuota').value);
+    const total = vc * n;
+    $('#pv-fin').textContent = money(mf);
+    $('#pv-total').textContent = money(total);
+    $('#pv-int').textContent = money(total - mf);
+  }
+  updateFinPreview();
+  if (veh) $('#veh-del').addEventListener('click', () => eliminarVehiculo(veh));
+  $('#veh-save').addEventListener('click', () => guardarVehiculo(veh, fin));
+}
+
+async function guardarVehiculo(veh, finPrev) {
+  const modelo = $('#f-modelo').value.trim();
+  if (!modelo) { toast('El modelo es obligatorio', 'err'); return; }
+  const estado = $('#f-estado').value;
+  const tipo_venta = $('#f-tipo_venta').value || null;
+  const payload = {
+    marca: $('#f-marca').value.trim() || null,
+    modelo,
+    anio: intOr($('#f-anio').value, null),
+    kilometros: intOr($('#f-km').value, null),
+    patente: ($('#f-patente').value.trim() || null),
+    color: $('#f-color').value.trim() || null,
+    combustible: $('#f-combustible').value.trim() || null,
+    transmision: $('#f-transmision').value.trim() || null,
+    fecha_compra: $('#f-fecha_compra').value || null,
+    precio_compra: num($('#f-precio_compra').value),
+    gastos: num($('#f-gastos').value),
+    financista_id: $('#f-financista').value || null,
+    estado,
+    fecha_venta: estado === 'vendido' ? ($('#f-fecha_venta').value || null) : null,
+    precio_venta: estado === 'vendido' ? num($('#f-precio_venta').value) : null,
+    tipo_venta: estado === 'vendido' ? tipo_venta : null,
+    comprador_nombre: estado === 'vendido' ? ($('#f-comprador_nombre').value.trim() || null) : null,
+    comprador_rut: estado === 'vendido' ? ($('#f-comprador_rut').value.trim() || null) : null,
+    comprador_telefono: estado === 'vendido' ? ($('#f-comprador_telefono').value.trim() || null) : null,
+    comprador_email: estado === 'vendido' ? ($('#f-comprador_email').value.trim() || null) : null,
+    comprador_comuna: estado === 'vendido' ? ($('#f-comprador_comuna').value.trim() || null) : null,
+    comprador_direccion: estado === 'vendido' ? ($('#f-comprador_direccion').value.trim() || null) : null,
+    transferido: estado === 'vendido' ? $('#f-transferido').checked : false,
+    fecha_transferencia: estado === 'vendido' && $('#f-transferido').checked ? ($('#f-fecha_transferencia').value || null) : null,
+    notas: $('#f-notas').value.trim() || null,
+  };
+  const btn = $('#veh-save'); btn.disabled = true; btn.textContent = 'Guardando…';
+  try {
+    let vehId;
+    if (veh) {
+      const { error } = await supabase.from('vehiculos').update(payload).eq('id', veh.id);
+      if (error) throw error; vehId = veh.id;
+    } else {
+      const { data, error } = await supabase.from('vehiculos').insert(payload).select('id').single();
+      if (error) throw error; vehId = data.id;
+    }
+
+    // Financiamiento directo
+    const esFin = estado === 'vendido' && tipo_venta === 'financiamiento_directo';
+    if (esFin) {
+      const pie = num($('#f-pie').value);
+      const mf = num($('#f-precio_venta').value) - pie;
+      const iPct = num($('#f-fin_interes').value);
+      const n = intOr($('#f-fin_n').value, 1);
+      let vc = num($('#f-fin_cuota').value);
+      if (!vc) vc = cuotaFrancesa(mf, iPct, n);
+      const fecha1 = $('#f-fin_fecha').value || todayISO();
+      const total = vc * n;
+      const finPayload = { vehiculo_id: vehId, pie, monto_financiado: mf, interes_mensual_pct: iPct, n_cuotas: n, valor_cuota: vc, fecha_primera_cuota: fecha1, total_a_pagar: total };
+
+      const cambiado = !finPrev || finPrev.pie != pie || finPrev.n_cuotas != n || Number(finPrev.valor_cuota) != vc || finPrev.fecha_primera_cuota != fecha1 || Number(finPrev.monto_financiado) != mf;
+      const { data: finRow, error: e1 } = await supabase.from('financiamientos').upsert(finPayload, { onConflict: 'vehiculo_id' }).select('id').single();
+      if (e1) throw e1;
+      if (cambiado) {
+        // Regenerar cuotas
+        await supabase.from('cuotas_comprador').delete().eq('financiamiento_id', finRow.id);
+        const cuotas = generarCuotasComprador(vc, n, fecha1).map((c) => ({ ...c, financiamiento_id: finRow.id, vehiculo_id: vehId }));
+        if (cuotas.length) { const { error: e2 } = await supabase.from('cuotas_comprador').insert(cuotas); if (e2) throw e2; }
+      }
+    } else if (finPrev) {
+      // Ya no es financiamiento directo → limpiar
+      await supabase.from('financiamientos').delete().eq('vehiculo_id', vehId);
+    }
+
+    await loadAll();
+    closeModal();
+    renderView();
+    toast(veh ? 'Vehículo actualizado' : 'Vehículo creado', 'ok');
+  } catch (e) {
+    console.error(e); toast('Error: ' + (e.message || e), 'err');
+    btn.disabled = false; btn.textContent = veh ? 'Guardar cambios' : 'Crear vehículo';
+  }
+}
+
+async function eliminarVehiculo(veh) {
+  if (!confirm(`¿Eliminar ${veh.marca || ''} ${veh.modelo}? Se borrarán también su financiamiento y cuotas. Esta acción no se puede deshacer.`)) return;
+  const { error } = await supabase.from('vehiculos').delete().eq('id', veh.id);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  await loadAll(); closeModal(); renderView(); toast('Vehículo eliminado', 'ok');
+}
+
+/* ============================================================
+   MODAL: Detalle de vehículo
+============================================================ */
+function openVehiculoDetalle(id) {
+  const v = state.vehiculos.find((x) => x.id === id); if (!v) return;
+  const fin = state.financiamientos.find((x) => x.vehiculo_id === id);
+  const cuotas = state.cuotasC.filter((c) => c.vehiculo_id === id).sort((a, b) => a.numero - b.numero);
+  const isFin = v.tipo_venta === 'financiamiento_directo' && fin;
+
+  const detalle = `
+    <div class="detail-grid">
+      <div class="d"><div class="l">Vehículo</div><div class="v">${esc(v.marca || '')} ${esc(v.modelo)}</div></div>
+      <div class="d"><div class="l">Año / Kilómetros</div><div class="v">${v.anio || '—'} · ${v.kilometros != null ? moneyPlain(v.kilometros) + ' km' : '—'}</div></div>
+      <div class="d"><div class="l">Patente</div><div class="v">${esc(v.patente) || '—'}</div></div>
+      <div class="d"><div class="l">Color · Combustible</div><div class="v">${esc(v.color) || '—'} · ${esc(v.combustible) || '—'}</div></div>
+      <div class="d"><div class="l">Compra</div><div class="v">${money(v.precio_compra)} <span class="muted">(${fmtDate(v.fecha_compra)})</span></div></div>
+      <div class="d"><div class="l">Gastos</div><div class="v">${money(v.gastos)}</div></div>
+      <div class="d"><div class="l">Financista de la compra</div><div class="v">${esc(v.financista_nombre) || '—'}</div></div>
+      <div class="d"><div class="l">Costo total</div><div class="v">${money(v.costo_total)}</div></div>
+    </div>`;
+
+  let ventaBlock = '';
+  if (v.estado === 'vendido') {
+    const gan = v.ganancia_base != null ? v.ganancia_base : 0;
+    const interesC = isFin ? (Number(v.interes_comprador) || 0) : 0;
+    ventaBlock = `
+    <div class="form-section">Venta</div>
+    <div class="detail-grid">
+      <div class="d"><div class="l">Comprador</div><div class="v">${esc(v.comprador_nombre) || '—'}</div></div>
+      <div class="d"><div class="l">RUT</div><div class="v">${esc(v.comprador_rut) || '—'}</div></div>
+      <div class="d"><div class="l">Fecha venta</div><div class="v">${fmtDate(v.fecha_venta)}</div></div>
+      <div class="d"><div class="l">Tipo</div><div class="v">${v.tipo_venta === 'financiamiento_directo' ? 'Financiamiento directo' : 'Contado'}</div></div>
+      <div class="d"><div class="l">Precio de venta</div><div class="v">${money(v.precio_venta)}</div></div>
+      <div class="d"><div class="l">Transferencia</div><div class="v">${v.transferido ? '<span class="badge si">✓ Transferido ' + (v.fecha_transferencia ? fmtDate(v.fecha_transferencia) : '') + '</span>' : '<span class="badge no">Pendiente</span>'}</div></div>
+    </div>
+    <div class="mini-stat" style="margin-top:14px">
+      <div class="ms"><div class="l">Margen del auto</div><div class="v" style="color:${gan >= 0 ? 'var(--green)' : 'var(--red)'}">${money(gan)}</div></div>
+      ${isFin ? `<div class="ms"><div class="l">Interés a ganar</div><div class="v" style="color:var(--green)">${money(interesC)}</div></div>` : ''}
+      ${isFin ? `<div class="ms"><div class="l">Ganancia total</div><div class="v" style="color:var(--green)">${money(gan + interesC)}</div></div>` : ''}
+    </div>`;
+  }
+
+  let cuotasBlock = '';
+  if (isFin) {
+    const pagadas = cuotas.filter((c) => c.pagada).length;
+    const cobrado = cuotas.filter((c) => c.pagada).reduce((a, c) => a + (Number(c.monto_pagado ?? c.monto) || 0), 0);
+    const saldo = cuotas.filter((c) => !c.pagada).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+    cuotasBlock = `
+    <div class="form-section">Plan de cuotas (financiamiento directo)</div>
+    <div class="mini-stat">
+      <div class="ms"><div class="l">Pie</div><div class="v">${money(fin.pie)}</div></div>
+      <div class="ms"><div class="l">Financiado</div><div class="v">${money(fin.monto_financiado)}</div></div>
+      <div class="ms"><div class="l">Cuota</div><div class="v">${money(fin.valor_cuota)}</div></div>
+      <div class="ms"><div class="l">Avance</div><div class="v">${pagadas}/${fin.n_cuotas}</div></div>
+      <div class="ms"><div class="l">Cobrado</div><div class="v" style="color:var(--green)">${money(cobrado)}</div></div>
+      <div class="ms"><div class="l">Saldo</div><div class="v" style="color:var(--red)">${money(saldo)}</div></div>
+    </div>
+    <div style="margin-top:12px">${cuotas.map((c) => cuotaRow(c, 'cuotas_comprador')).join('')}</div>`;
+  }
+
+  const html = `
+  <div class="modal-head"><h3>${esc(v.marca || '')} ${esc(v.modelo)} ${v.anio ? '· ' + v.anio : ''}</h3><button class="x" data-close>×</button></div>
+  <div class="modal-body">
+    ${detalle}${ventaBlock}${cuotasBlock}
+    ${v.notas ? `<div class="form-section">Notas</div><p class="muted" style="margin:0">${esc(v.notas)}</p>` : ''}
+  </div>
+  <div class="modal-foot">
+    <div>${isFin ? `<button class="btn btn-ghost" id="veh-promesa">📄 Generar promesa</button>` : ''}</div>
+    <div class="right"><button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="veh-edit">Editar</button></div>
+  </div>`;
+  modal(html, 'lg');
+  $('#veh-edit').addEventListener('click', () => { closeModal(); openVehiculoForm(v); });
+  if (isFin) $('#veh-promesa').addEventListener('click', () => generarPromesa(v, fin, cuotas));
+  $('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
+}
+
+function cuotaRow(c, tabla) {
+  const dd = daysUntil(c.fecha_vencimiento);
+  const atras = !c.pagada && dd !== null && dd < 0;
+  const cls = c.pagada ? 'pagada' : atras ? 'atras' : '';
+  const estado = c.pagada ? `<span class="badge pag">✓ Pagada ${c.fecha_pago ? fmtDate(c.fecha_pago) : ''}</span>` : atras ? `<span class="badge atras">Atrasada</span>` : `<span class="badge pend">Pendiente</span>`;
+  const btn = c.pagada
+    ? `<button class="btn btn-soft btn-xs" data-act="toggle-cuota" data-tabla="${tabla}" data-id="${c.id}" data-estado="pagada">Marcar pendiente</button>`
+    : `<button class="btn btn-success btn-xs" data-act="toggle-cuota" data-tabla="${tabla}" data-id="${c.id}" data-estado="pendiente">Registrar pago</button>`;
+  return `<div class="cuota-row ${cls}">
+    <div class="n">${c.numero}</div>
+    <div class="info"><div class="m">${money(c.monto)}</div><div class="d">Vence ${fmtDate(c.fecha_vencimiento)} · ${estado}</div></div>
+    <div>${btn}</div>
+  </div>`;
+}
+
+async function pagarCuota(tabla, id, pagar) {
+  const patch = pagar ? { pagada: true, fecha_pago: todayISO() } : { pagada: false, fecha_pago: null, monto_pagado: null };
+  if (pagar) {
+    const arr = tabla === 'cuotas_comprador' ? state.cuotasC : state.cuotasF;
+    const c = arr.find((x) => x.id === id);
+    if (c) patch.monto_pagado = c.monto;
+  }
+  const { error } = await supabase.from(tabla).update(patch).eq('id', id);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  await loadAll();
+  toast(pagar ? 'Pago registrado' : 'Cuota marcada pendiente', 'ok');
+  renderView();
+  reabrirDetalleSiCorresponde(tabla, id);
+}
+function reabrirDetalleSiCorresponde(tabla, id) {
+  if (!$('#modal-root').innerHTML) return;
+  if (tabla === 'cuotas_comprador') {
+    const c = state.cuotasC.find((x) => x.id === id);
+    if (c) { closeModal(); openVehiculoDetalle(c.vehiculo_id); }
+  } else {
+    const c = state.cuotasF.find((x) => x.id === id);
+    if (c) { closeModal(); openFinancistaDetalle(c.financista_id); }
+  }
+}
+
+/* ============================================================
+   MODAL: Financista (crear / editar)
+============================================================ */
+function openFinancistaForm(f) {
+  const x = f || {};
+  const html = `
+  <div class="modal-head"><h3>${f ? 'Editar financista' : 'Nuevo financista'}</h3><button class="x" data-close>×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="field full"><label>Nombre *</label><input id="ff-nombre" required value="${esc(x.nombre)}" placeholder="Nombre del financista"></div>
+      <div class="field"><label>RUT</label><input id="ff-rut" value="${esc(x.rut)}" placeholder="12.345.678-9"></div>
+      <div class="field"><label>Interés mensual %</label><input id="ff-interes" type="number" step="0.01" value="${x.interes_mensual_pct ?? 0}" placeholder="Ej: 3"></div>
+      <div class="field"><label>Teléfono</label><input id="ff-telefono" value="${esc(x.telefono)}" placeholder="+56 9 ..."></div>
+      <div class="field"><label>Email</label><input id="ff-email" value="${esc(x.email)}"></div>
+      <div class="field full"><label>Notas</label><textarea id="ff-notas" placeholder="Condiciones, acuerdos…">${esc(x.notas)}</textarea></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <div>${f ? `<button class="btn btn-danger" id="ff-del">Eliminar</button>` : '<span></span>'}</div>
+    <div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="ff-save">${f ? 'Guardar' : 'Crear'}</button></div>
+  </div>`;
+  modal(html);
+  $('#ff-save').addEventListener('click', async () => {
+    const nombre = $('#ff-nombre').value.trim();
+    if (!nombre) { toast('El nombre es obligatorio', 'err'); return; }
+    const payload = { nombre, rut: $('#ff-rut').value.trim() || null, interes_mensual_pct: num($('#ff-interes').value), telefono: $('#ff-telefono').value.trim() || null, email: $('#ff-email').value.trim() || null, notas: $('#ff-notas').value.trim() || null };
+    const res = f ? await supabase.from('financistas').update(payload).eq('id', f.id) : await supabase.from('financistas').insert(payload);
+    if (res.error) { toast('Error: ' + res.error.message, 'err'); return; }
+    await loadAll(); closeModal(); renderView(); toast(f ? 'Financista actualizado' : 'Financista creado', 'ok');
+  });
+  if (f) $('#ff-del').addEventListener('click', async () => {
+    if (!confirm(`¿Eliminar a ${f.nombre}? Se borrarán sus préstamos y cuotas asociadas.`)) return;
+    const { error } = await supabase.from('financistas').delete().eq('id', f.id);
+    if (error) { toast('Error: ' + error.message, 'err'); return; }
+    await loadAll(); closeModal(); renderView(); toast('Financista eliminado', 'ok');
+  });
+}
+
+/* ============================================================
+   MODAL: Detalle de financista
+============================================================ */
+function openFinancistaDetalle(id) {
+  const f = state.financistas.find((x) => x.id === id); if (!f) return;
+  const prestamos = state.prestamos.filter((p) => p.financista_id === id).sort((a, b) => (b.fecha_inicio || '').localeCompare(a.fecha_inicio || ''));
+  const prestamosHtml = prestamos.length ? prestamos.map((p) => {
+    const cuotas = state.cuotasF.filter((c) => c.prestamo_id === p.id).sort((a, b) => a.numero - b.numero);
+    const pagadas = cuotas.filter((c) => c.pagada).length;
+    const saldo = cuotas.filter((c) => !c.pagada).reduce((a, c) => a + (Number(c.monto) || 0), 0);
+    const veh = p.vehiculo_id ? state.vehiculos.find((v) => v.id === p.vehiculo_id) : null;
+    return `<div class="card" style="margin-bottom:14px;box-shadow:none;border:1px solid var(--line)">
+      <div class="card-head" style="padding:12px 15px">
+        <div><h3 style="font-size:14px">${money(p.monto)} · ${(Number(p.interes_mensual_pct) || 0)}% mensual</h3><div class="hint">${p.modalidad === 'cuota_fija' ? 'Cuota fija' : 'Interés mensual + capital al final'} · desde ${fmtDate(p.fecha_inicio)}${veh ? ' · ' + esc(veh.marca || '') + ' ' + esc(veh.modelo) : ''}${p.descripcion ? ' · ' + esc(p.descripcion) : ''}</div></div>
+        <div style="text-align:right"><div class="strong" style="color:${saldo > 0 ? 'var(--red)' : 'var(--green)'}">${money(saldo)}</div><div class="hint">${pagadas}/${cuotas.length} pagadas</div></div>
+      </div>
+      <div class="card-pad">${cuotas.map((c) => cuotaRow(c, 'cuotas_financista')).join('')}
+        <button class="btn btn-soft btn-xs" data-act="del-prestamo" data-id="${p.id}" style="margin-top:6px">Eliminar préstamo</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty" style="padding:26px"><div class="big">💰</div><p>Sin préstamos registrados para este financista.</p></div>`;
+
+  const html = `
+  <div class="modal-head"><h3>${esc(f.nombre)}</h3><button class="x" data-close>×</button></div>
+  <div class="modal-body">
+    <div class="mini-stat">
+      <div class="ms"><div class="l">Interés pactado</div><div class="v">${(Number(f.interes_mensual_pct) || 0)}%</div></div>
+      <div class="ms"><div class="l">Capital prestado</div><div class="v">${money(f.capital_prestado)}</div></div>
+      <div class="ms"><div class="l">Le debemos</div><div class="v" style="color:${f.deuda_pendiente > 0 ? 'var(--red)' : 'var(--green)'}">${money(f.deuda_pendiente)}</div></div>
+      <div class="ms"><div class="l">Pagado</div><div class="v" style="color:var(--green)">${money(f.deuda_pagada)}</div></div>
+      <div class="ms"><div class="l">Interés total</div><div class="v">${money(f.interes_total)}</div></div>
+    </div>
+    ${f.rut || f.telefono || f.email ? `<p class="muted" style="margin:14px 0 0;font-size:13px">${[f.rut, f.telefono, f.email].filter(Boolean).map(esc).join(' · ')}</p>` : ''}
+    <div class="form-section">Préstamos</div>
+    ${prestamosHtml}
+  </div>
+  <div class="modal-foot">
+    <div><button class="btn btn-primary" id="fin-nuevo-prestamo">＋ Nuevo préstamo</button></div>
+    <div class="right"><button class="btn btn-ghost" id="fin-edit">Editar datos</button><button class="btn btn-ghost" data-close>Cerrar</button></div>
+  </div>`;
+  modal(html, 'lg');
+  $('#fin-edit').addEventListener('click', () => { closeModal(); openFinancistaForm(f); });
+  $('#fin-nuevo-prestamo').addEventListener('click', () => { openPrestamoForm(f); });
+  $('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
+  $('#modal-root [data-act="del-prestamo"]').forEach((b) => b.addEventListener('click', () => eliminarPrestamo(b.dataset.id, f.id)));
+}
+
+async function eliminarPrestamo(pid, finId) {
+  if (!confirm('¿Eliminar este préstamo y todas sus cuotas?')) return;
+  const { error } = await supabase.from('prestamos_financista').delete().eq('id', pid);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  await loadAll(); toast('Préstamo eliminado', 'ok'); closeModal(); openFinancistaDetalle(finId); renderView();
+}
+
+/* ============================================================
+   MODAL: Préstamo de financista
+============================================================ */
+function openPrestamoForm(f) {
+  const vehOpts = `<option value="">— Ninguno —</option>` + state.vehiculos.map((v) => `<option value="${v.id}">${esc(v.marca || '')} ${esc(v.modelo)} ${v.patente ? '(' + esc(v.patente) + ')' : ''}</option>`).join('');
+  const html = `
+  <div class="modal-head"><h3>Nuevo préstamo · ${esc(f.nombre)}</h3><button class="x" data-close>×</button></div>
+  <div class="modal-body">
+    <div class="form-grid">
+      <div class="field"><label>Monto (capital)</label><input id="p-monto" type="number" placeholder="0"></div>
+      <div class="field"><label>Interés mensual %</label><input id="p-interes" type="number" step="0.01" value="${f.interes_mensual_pct ?? 0}"></div>
+      <div class="field"><label>Fecha de inicio</label><input id="p-fecha" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>N° de cuotas</label><input id="p-n" type="number" value="6"></div>
+      <div class="field"><label>Modalidad</label><select id="p-modalidad">
+        <option value="interes_mensual">Interés mensual + capital al final</option>
+        <option value="cuota_fija">Cuota fija (amortizada)</option>
+      </select></div>
+      <div class="field"><label>Auto asociado (opcional)</label><select id="p-vehiculo">${vehOpts}</select></div>
+      <div class="field full"><label>Descripción (opcional)</label><input id="p-desc" placeholder="Ej: capital para compra de inventario"></div>
+    </div>
+    <div class="calcbox" id="p-preview">
+      <div class="c-item"><div class="l">Cuota estimada</div><div class="v" id="pp-cuota">$0</div></div>
+      <div class="c-item"><div class="l">Total a pagar</div><div class="v" id="pp-total">$0</div></div>
+      <div class="c-item"><div class="l">Interés total</div><div class="v" id="pp-int" style="color:var(--red)">$0</div></div>
+    </div>
+    <div class="help">Se generará automáticamente el calendario de cuotas con sus fechas de vencimiento.</div>
+  </div>
+  <div class="modal-foot"><div></div><div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="p-save">Crear préstamo</button></div></div>`;
+  modal(html);
+  const upd = () => {
+    const monto = num($('#p-monto').value), iPct = num($('#p-interes').value), n = intOr($('#p-n').value, 1), mod = $('#p-modalidad').value;
+    const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: todayISO() });
+    const total = cuotas.reduce((a, c) => a + c.monto, 0);
+    const inte = cuotas.reduce((a, c) => a + c.interes, 0);
+    $('#pp-cuota').textContent = mod === 'cuota_fija' ? money(cuotaFrancesa(monto, iPct, n)) : money(Math.round(monto * iPct / 100));
+    $('#pp-total').textContent = money(total);
+    $('#pp-int').textContent = money(inte);
+  };
+  ['p-monto', 'p-interes', 'p-n', 'p-modalidad'].forEach((id) => $('#' + id).addEventListener('input', upd));
+  upd();
+  $('#p-save').addEventListener('click', async () => {
+    const monto = num($('#p-monto').value);
+    if (monto <= 0) { toast('Ingresa el monto del préstamo', 'err'); return; }
+    const iPct = num($('#p-interes').value), n = intOr($('#p-n').value, 1), mod = $('#p-modalidad').value, fecha = $('#p-fecha').value || todayISO();
+    const payload = { financista_id: f.id, vehiculo_id: $('#p-vehiculo').value || null, monto, interes_mensual_pct: iPct, fecha_inicio: fecha, n_cuotas: n, modalidad: mod, descripcion: $('#p-desc').value.trim() || null };
+    try {
+      const { data: pr, error } = await supabase.from('prestamos_financista').insert(payload).select('id').single();
+      if (error) throw error;
+      const cuotas = generarCuotasFinancista({ monto, iPct, n, modalidad: mod, fechaInicio: fecha }).map((c) => ({ ...c, prestamo_id: pr.id, financista_id: f.id }));
+      const { error: e2 } = await supabase.from('cuotas_financista').insert(cuotas);
+      if (e2) throw e2;
+      await loadAll(); toast('Préstamo creado', 'ok'); closeModal(); openFinancistaDetalle(f.id); renderView();
+    } catch (e) { console.error(e); toast('Error: ' + (e.message || e), 'err'); }
+  });
+}
+
+/* ============================================================
+   Promesa de compraventa
+============================================================ */
+function generarPromesa(v, fin, cuotas) {
+  const c = state.config || {};
+  if (!c.empresa_nombre) {
+    if (confirm('Aún no has completado los datos de tu empresa (necesarios para la promesa). ¿Ir a Configuración ahora?')) { closeModal(); navigate('config'); }
+    return;
+  }
+  const html = buildPromesaHTML(v, fin, cuotas, c);
+  const modalHtml = `
+  <div class="modal-head no-print"><h3>Promesa de compraventa</h3><button class="x" data-close>×</button></div>
+  <div class="modal-body" style="background:#f4f6f9">
+    <div style="background:#fff;box-shadow:var(--shadow);border-radius:6px;overflow:hidden">${html}</div>
+  </div>
+  <div class="modal-foot no-print"><div class="help">Documento referencial. Revísalo con tu abogado/notaría antes de firmar.</div><div class="right"><button class="btn btn-ghost" data-close>Cerrar</button><button class="btn btn-primary" id="promesa-print">🖨 Imprimir / Guardar PDF</button></div></div>`;
+  modal(modalHtml, 'lg');
+  $('#promesa-print').addEventListener('click', () => imprimirPromesa(html));
+}
+
+function imprimirPromesa(html) {
+  const w = window.open('', '_blank');
+  if (!w) { toast('Permite las ventanas emergentes para imprimir', 'err'); return; }
+  w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Promesa de compraventa</title></head><body>${html}<script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>`);
+  w.document.close();
+}
+
+function buildPromesaHTML(v, fin, cuotas, c) {
+  const hoy = new Date();
+  const fechaTxt = `${hoy.getDate()} de ${MESES_L[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+  const cuotasSorted = (cuotas || []).slice().sort((a, b) => a.numero - b.numero);
+  const cellB = 'border:1px solid #999;padding:5px';
+  const filasCuotas = cuotasSorted.map((q) => `<tr><td style="${cellB};text-align:center">${q.numero}</td><td style="${cellB}">${fmtDateLong(q.fecha_vencimiento)}</td><td style="${cellB};text-align:right">${money(q.monto)}</td></tr>`).join('');
+  const vend = c.empresa_nombre || '—';
+  const vehDesc = `${v.marca || ''} ${v.modelo || ''}`.trim();
+  const st = 'font-family:Georgia,\'Times New Roman\',serif;color:#1a1a1a;';
+  return `<div class="promesa" style="${st}max-width:760px;margin:0 auto;padding:48px 54px;font-size:13.5px;line-height:1.7;background:#fff">
+    <div style="text-align:center;margin-bottom:26px">
+      <div style="font-size:17px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase">Contrato de Promesa de Compraventa</div>
+      <div style="font-size:14px;text-transform:uppercase;letter-spacing:.5px">de Vehículo Motorizado</div>
+    </div>
+    <p>En ${esc(c.ciudad || 'Santiago')}, a ${fechaTxt}, entre <b>${esc(vend)}</b>${c.empresa_rut ? ', RUT ' + esc(c.empresa_rut) : ''}${c.representante_nombre ? ', representada legalmente por don(ña) <b>' + esc(c.representante_nombre) + '</b>' + (c.representante_rut ? ', cédula de identidad N° ' + esc(c.representante_rut) : '') : ''}${c.direccion ? ', con domicilio en ' + esc(c.direccion) + (c.comuna ? ', ' + esc(c.comuna) : '') : ''}, en adelante el <b>"Promitente Vendedor"</b>; y don(ña) <b>${esc(v.comprador_nombre) || '_______________'}</b>${v.comprador_rut ? ', cédula de identidad N° ' + esc(v.comprador_rut) : ''}${v.comprador_direccion ? ', con domicilio en ' + esc(v.comprador_direccion) + (v.comprador_comuna ? ', ' + esc(v.comprador_comuna) : '') : ''}, en adelante el <b>"Promitente Comprador"</b>, se ha convenido el siguiente contrato de promesa de compraventa:</p>
+
+    <p><b>PRIMERO: Del vehículo.</b> El Promitente Vendedor es dueño del siguiente vehículo motorizado, cuyas características son: Marca <b>${esc(v.marca) || '—'}</b>, Modelo <b>${esc(v.modelo) || '—'}</b>, Año <b>${v.anio || '—'}</b>, Color ${esc(v.color) || '—'}, Patente única <b>${esc(v.patente) || '—'}</b>, con un kilometraje aproximado de ${v.kilometros != null ? moneyPlain(v.kilometros) : '—'} km${v.combustible ? ', combustible ' + esc(v.combustible) : ''}${v.transmision ? ', transmisión ' + esc(v.transmision) : ''}.</p>
+
+    <p><b>SEGUNDO: Del precio y forma de pago.</b> El precio de la compraventa prometida es la suma de <b>${money(v.precio_venta)}</b>, que el Promitente Comprador pagará de la siguiente forma:</p>
+    <div style="margin:0 0 10px 18px">
+      ${fin && Number(fin.pie) > 0 ? `• Un pie o pago inicial de <b>${money(fin.pie)}</b>, pagado a la firma del presente instrumento.<br>` : ''}
+      • El saldo de <b>${money(fin ? fin.monto_financiado : v.precio_venta)}</b> mediante <b>${fin ? fin.n_cuotas : 0}</b> cuota(s) mensuales y sucesivas de <b>${money(fin ? fin.valor_cuota : 0)}</b> cada una${fin && Number(fin.interes_mensual_pct) > 0 ? `, que incluye un interés pactado del <b>${fin.interes_mensual_pct}%</b> mensual sobre el saldo` : ''}, con vencimiento el primer pago el <b>${fin ? fmtDateLong(fin.fecha_primera_cuota) : '—'}</b> y los siguientes en igual día de cada mes.
+    </div>
+    ${filasCuotas ? `<table style="width:100%;border-collapse:collapse;margin:8px 0 14px;font-size:12.5px">
+      <thead><tr><th style="border:1px solid #999;padding:5px;background:#f0f0f0">N°</th><th style="border:1px solid #999;padding:5px;background:#f0f0f0;text-align:left">Fecha de vencimiento</th><th style="border:1px solid #999;padding:5px;background:#f0f0f0;text-align:right">Monto</th></tr></thead>
+      <tbody>${filasCuotas}</tbody>
+      <tfoot><tr><td colspan="2" style="border:1px solid #999;padding:5px;text-align:right"><b>Total saldo</b></td><td style="border:1px solid #999;padding:5px;text-align:right"><b>${money(fin ? fin.total_a_pagar : 0)}</b></td></tr></tfoot>
+    </table>` : ''}
+
+    <p><b>TERCERO: De la entrega y reserva de dominio.</b> El vehículo se entrega materialmente al Promitente Comprador en este acto, quien declara recibirlo a su entera satisfacción en el estado en que se encuentra. Las partes acuerdan que la <b>transferencia de dominio</b> ante el Registro Nacional de Vehículos Motorizados del Servicio de Registro Civil e Identificación se realizará <b>una vez pagada íntegramente la totalidad del precio</b> antes señalado, momento en el cual se suscribirá el contrato de compraventa definitivo.</p>
+
+    <p><b>CUARTO: Del incumplimiento.</b> El no pago oportuno de una o más cuotas facultará al Promitente Vendedor para exigir el pago total de la deuda como si fuera de plazo vencido, o bien para dejar sin efecto la presente promesa, debiendo en tal caso restituirse el vehículo, sin perjuicio de las indemnizaciones que correspondan. La mora se producirá por el solo hecho del retardo.</p>
+
+    <p><b>QUINTO: De los gastos.</b> Los gastos, impuestos y derechos que se originen con motivo de la transferencia definitiva del vehículo serán de cargo del Promitente Comprador, salvo acuerdo distinto de las partes.</p>
+
+    <p><b>SEXTO: Prohibición.</b> Mientras se encuentre pendiente el pago del precio, el Promitente Comprador no podrá enajenar, gravar, ni transferir el vehículo a ningún título, sin autorización escrita del Promitente Vendedor.</p>
+
+    <p><b>SÉPTIMO: Domicilio.</b> Para todos los efectos legales derivados del presente contrato, las partes fijan su domicilio en la ciudad de ${esc(c.ciudad || 'Santiago')} y se someten a la competencia de sus tribunales.</p>
+
+    <div style="margin-top:56px;display:flex;justify-content:space-between;gap:40px;text-align:center">
+      <div style="flex:1;border-top:1px solid #333;padding-top:6px">${esc(c.representante_nombre || c.empresa_nombre || 'Promitente Vendedor')}<br><span style="font-size:11.5px">Promitente Vendedor</span><br><span style="font-size:11px">${esc(c.empresa_rut) || ''}</span></div>
+      <div style="flex:1;border-top:1px solid #333;padding-top:6px">${esc(v.comprador_nombre || 'Promitente Comprador')}<br><span style="font-size:11.5px">Promitente Comprador</span><br><span style="font-size:11px">${esc(v.comprador_rut) || ''}</span></div>
+    </div>
+    <p style="margin-top:34px;font-size:10.5px;color:#888;font-style:italic;border-top:1px solid #ddd;padding-top:10px">Documento generado como plantilla referencial por el sistema de administración de ${esc(c.empresa_nombre)}. Se recomienda su revisión por un abogado o notario antes de la firma. No constituye asesoría legal.</p>
+  </div>`;
+}
+
+/* ============================================================
+   API pública (para botones inline)
+============================================================ */
+window.__app = {
+  nuevoAuto: () => openVehiculoForm(null),
+  nuevoFinancista: () => openFinancistaForm(null),
+  go: (v) => navigate(v),
+};
+
+init();
+
+</script>
+</body>
+</html>
