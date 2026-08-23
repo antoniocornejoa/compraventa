@@ -326,6 +326,75 @@ table.tbl tr:hover td{background:var(--surface-2)}
 .menu-btn svg{width:19px;height:19px}
 @media(max-width:480px){.kpi-grid{grid-template-columns:1fr}}
 
+/* ============================================================
+   Móvil / teléfonos
+============================================================ */
+@media(max-width:680px){
+  /* iOS: 16px evita el zoom automático al enfocar inputs */
+  .field input,.field select,.field textarea,.toolbar .search input{font-size:16px}
+
+  /* Tablas -> tarjetas apiladas */
+  .table-wrap{overflow-x:visible}
+  table.tbl,table.tbl tbody{display:block}
+  table.tbl thead{display:none}
+  table.tbl tr{
+    display:flex;flex-direction:column;
+    border:1px solid var(--line);border-radius:13px;margin:0 0 12px;
+    background:var(--surface);box-shadow:var(--shadow-xs);overflow:hidden;
+  }
+  table.tbl tr:hover td{background:transparent}
+  table.tbl td{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:11px 15px;border-bottom:1px solid var(--line-2);text-align:right;white-space:normal;
+  }
+  table.tbl td:last-child{border-bottom:none}
+  table.tbl td::before{
+    content:attr(data-label);font-size:11px;text-transform:uppercase;letter-spacing:.4px;
+    color:var(--ink-soft);font-weight:700;text-align:left;flex:0 0 auto;
+  }
+  table.tbl td .cell-sub{text-align:right}
+  /* celda-título de cada tarjeta (nombre) */
+  table.tbl td.cell-first{
+    order:-1;display:block;text-align:left;background:var(--surface-2);
+    border-bottom:1px solid var(--line);padding:13px 15px;
+  }
+  table.tbl td.cell-first::before{display:none}
+  table.tbl td.cell-first .cell-main{font-size:15px}
+  table.tbl td.cell-first .cell-sub{text-align:left}
+  /* celda de acción (botón) */
+  table.tbl td.cell-action{padding:12px 15px}
+  table.tbl td.cell-action::before{display:none}
+  table.tbl td.cell-action .btn{width:100%;padding:11px}
+
+  /* KPIs: una columna, valores algo más chicos */
+  .kpi-grid{grid-template-columns:1fr;gap:12px}
+  .kpi .k-value{font-size:22px}
+
+  /* Modales a pantalla casi completa */
+  .modal-back{padding:10px 8px 24px;align-items:flex-start}
+  .modal,.modal.lg,.modal.sm{max-width:100%;border-radius:15px}
+  .modal-body{padding:17px 16px}
+  .modal-head{padding:15px 16px}
+  .modal-foot{padding:13px 16px;flex-wrap:wrap}
+  .modal-foot .right{flex:1;justify-content:flex-end}
+  .detail-grid{grid-template-columns:1fr;gap:0}
+  .mini-stat .ms{min-width:calc(50% - 5px)}
+
+  /* Toolbar / filtros: ocupan el ancho y se pueden tocar bien */
+  .toolbar .search{max-width:none;flex:1 1 100%}
+  .seg{width:100%;overflow-x:auto}
+  .seg button{flex:1;padding:9px 10px;white-space:nowrap}
+
+  /* Topbar */
+  .topbar h1{font-size:18px}
+  .topbar-actions .btn{padding:9px 13px}
+
+  /* Botones con mejor área táctil */
+  .btn-xs{padding:7px 12px;font-size:12.5px}
+  .btn-sm{padding:8px 13px}
+  .cuota-row .btn-xs{padding:8px 12px}
+}
+
 /* print: promesa */
 @media print{
   body *{visibility:hidden}
@@ -859,14 +928,14 @@ function renderAutos() {
       cuotasTxt = `<span class="mono">${v.cuotas_pagadas}/${v.cuotas_totales}</span>${at}`;
     }
     return `<tr class="row-click" data-act="veh-detail" data-id="${v.id}">
-      <td><div class="cell-main">${esc(v.marca || '')} ${esc(v.modelo)}</div><div class="cell-sub">${v.anio || '—'} · ${v.kilometros != null ? moneyPlain(v.kilometros) + ' km' : '— km'}${v.patente ? ' · ' + esc(v.patente) : ''}</div></td>
-      <td>${estadoBadge}${tipoV ? ' ' + tipoV : ''}</td>
-      <td><div>${v.comprador_nombre ? esc(v.comprador_nombre) : '<span class="muted">—</span>'}</div><div class="cell-sub">${v.fecha_venta ? fmtDate(v.fecha_venta) : ''}</div></td>
-      <td class="num">${money(v.costo_total)}</td>
-      <td class="num">${v.precio_venta != null ? money(v.precio_venta) : '<span class="muted">—</span>'}</td>
-      <td class="num">${ganTxt}</td>
-      <td>${cuotasTxt}</td>
-      <td>${transf}</td>
+      <td class="cell-first"><div class="cell-main">${esc(v.marca || '')} ${esc(v.modelo)}</div><div class="cell-sub">${v.anio || '—'} · ${v.kilometros != null ? moneyPlain(v.kilometros) + ' km' : '— km'}${v.patente ? ' · ' + esc(v.patente) : ''}</div></td>
+      <td data-label="Estado">${estadoBadge}${tipoV ? ' ' + tipoV : ''}</td>
+      <td data-label="Comprador"><div>${v.comprador_nombre ? esc(v.comprador_nombre) : '<span class="muted">—</span>'}</div><div class="cell-sub">${v.fecha_venta ? fmtDate(v.fecha_venta) : ''}</div></td>
+      <td class="num" data-label="Costo">${money(v.costo_total)}</td>
+      <td class="num" data-label="Venta">${v.precio_venta != null ? money(v.precio_venta) : '<span class="muted">—</span>'}</td>
+      <td class="num" data-label="Ganancia">${ganTxt}</td>
+      <td data-label="Cuotas">${cuotasTxt}</td>
+      <td data-label="Transf.">${transf}</td>
     </tr>`;
   }).join('');
 
@@ -888,12 +957,12 @@ function renderFinancistas() {
     const prox = f.proxima_venc ? fmtDate(f.proxima_venc) : '—';
     const atr = f.cuotas_atrasadas ? `<span class="badge atras">${f.cuotas_atrasadas} atrasada(s)</span>` : '';
     return `<tr class="row-click" data-act="fin-detail" data-id="${f.id}">
-      <td><div class="cell-main">${esc(f.nombre)}</div><div class="cell-sub">${f.rut ? esc(f.rut) + ' · ' : ''}${f.telefono ? esc(f.telefono) : ''}</div></td>
-      <td class="num"><span class="pill">${(Number(f.interes_mensual_pct) || 0)}% mensual</span></td>
-      <td class="num">${money(f.capital_prestado)}</td>
-      <td class="num"><span class="strong" style="color:${f.deuda_pendiente > 0 ? 'var(--red)' : 'var(--green)'}">${money(f.deuda_pendiente)}</span></td>
-      <td class="num">${money(f.deuda_pagada)}</td>
-      <td>${prox} ${atr}</td>
+      <td class="cell-first"><div class="cell-main">${esc(f.nombre)}</div><div class="cell-sub">${f.rut ? esc(f.rut) + ' · ' : ''}${f.telefono ? esc(f.telefono) : ''}</div></td>
+      <td class="num" data-label="Interés"><span class="pill">${(Number(f.interes_mensual_pct) || 0)}% mensual</span></td>
+      <td class="num" data-label="Capital prestado">${money(f.capital_prestado)}</td>
+      <td class="num" data-label="Debemos"><span class="strong" style="color:${f.deuda_pendiente > 0 ? 'var(--red)' : 'var(--green)'}">${money(f.deuda_pendiente)}</span></td>
+      <td class="num" data-label="Pagado">${money(f.deuda_pagada)}</td>
+      <td data-label="Próx. venc.">${prox} ${atr}</td>
     </tr>`;
   }).join('');
   const resumen = `<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:18px">
@@ -927,12 +996,12 @@ function renderVencimientos() {
     const atras = dd !== null && dd < 0;
     const estado = atras ? `<span class="badge atras">Atrasada ${Math.abs(dd)}d</span>` : dd === 0 ? `<span class="badge pend">Hoy</span>` : `<span class="badge vig">En ${dd}d</span>`;
     return `<tr>
-      <td><div class="cell-main">${fmtDate(v.fecha)}</div></td>
-      <td>${v.tipo === 'cobrar' ? '<span class="badge si">▲ Por cobrar</span>' : '<span class="badge atras">▼ Por pagar</span>'}</td>
-      <td><div>${esc(v.titulo)}</div><div class="cell-sub">${esc(v.sub)}</div></td>
-      <td class="num strong" style="color:${v.tipo === 'cobrar' ? 'var(--green)' : 'var(--red)'}">${money(v.monto)}</td>
-      <td>${estado}</td>
-      <td class="num"><button class="btn btn-success btn-xs" data-act="pagar-cuota" data-tabla="${v.tabla}" data-id="${v.cuotaId}">Registrar pago</button></td>
+      <td data-label="Vence"><div class="cell-main">${fmtDate(v.fecha)}</div></td>
+      <td data-label="Tipo">${v.tipo === 'cobrar' ? '<span class="badge si">▲ Por cobrar</span>' : '<span class="badge atras">▼ Por pagar</span>'}</td>
+      <td class="cell-first" data-label="Detalle"><div class="cell-main">${esc(v.titulo)}</div><div class="cell-sub">${esc(v.sub)}</div></td>
+      <td class="num strong" data-label="Monto" style="color:${v.tipo === 'cobrar' ? 'var(--green)' : 'var(--red)'}">${money(v.monto)}</td>
+      <td data-label="Estado">${estado}</td>
+      <td class="num cell-action"><button class="btn btn-success btn-xs" data-act="pagar-cuota" data-tabla="${v.tabla}" data-id="${v.cuotaId}">Registrar pago</button></td>
     </tr>`;
   }).join('');
   return toolbar + `<div class="card"><div class="table-wrap"><table class="tbl">
