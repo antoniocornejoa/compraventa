@@ -473,7 +473,7 @@ const state = {
    Helpers
 ============================================================ */
 const $ = (s, r = document) => r.querySelector(s);
-const $ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const clpFmt = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 const money = (n) => clpFmt.format(Math.round(Number(n) || 0));
 const moneyPlain = (n) => new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(Math.round(Number(n) || 0));
@@ -677,7 +677,7 @@ const VIEWS = {
 };
 function navigate(view) {
   state.view = view;
-  $('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  $$('#nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   $('#view-title').textContent = VIEWS[view].title;
   $('#view-sub').textContent = VIEWS[view].sub;
   $('#topbar-actions').innerHTML = topbarActions(view);
@@ -1041,7 +1041,7 @@ function modal(html, size = '') {
   root.innerHTML = `<div class="modal-back"><div class="modal ${size}">${html}</div></div>`;
   const back = $('.modal-back', root);
   back.addEventListener('mousedown', (e) => { if (e.target === back) closeModal(); });
-  $('[data-close]', root).forEach((b) => b.addEventListener('click', closeModal));
+  $$('[data-close]', root).forEach((b) => b.addEventListener('click', closeModal));
   document.addEventListener('keydown', escClose);
   return root;
 }
@@ -1323,7 +1323,7 @@ function openVehiculoDetalle(id) {
   modal(html, 'lg');
   $('#veh-edit').addEventListener('click', () => { closeModal(); openVehiculoForm(v); });
   if (isFin) $('#veh-promesa').addEventListener('click', () => generarPromesa(v, fin, cuotas));
-  $('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
+  $$('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
 }
 
 function cuotaRow(c, tabla) {
@@ -1447,8 +1447,8 @@ function openFinancistaDetalle(id) {
   modal(html, 'lg');
   $('#fin-edit').addEventListener('click', () => { closeModal(); openFinancistaForm(f); });
   $('#fin-nuevo-prestamo').addEventListener('click', () => { openPrestamoForm(f); });
-  $('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
-  $('#modal-root [data-act="del-prestamo"]').forEach((b) => b.addEventListener('click', () => eliminarPrestamo(b.dataset.id, f.id)));
+  $$('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
+  $$('#modal-root [data-act="del-prestamo"]').forEach((b) => b.addEventListener('click', () => eliminarPrestamo(b.dataset.id, f.id)));
 }
 
 async function eliminarPrestamo(pid, finId) {
