@@ -1003,7 +1003,7 @@ function renderAutos() {
       cuotasTxt = `<span class="mono">${v.cuotas_pagadas}/${v.cuotas_totales}</span>${at}`;
     }
     return `<tr class="row-click" data-act="veh-detail" data-id="${v.id}">
-      <td class="cell-first"><div class="cell-main">${esc(v.marca || '')} ${esc(v.modelo)}</div><div class="cell-sub">${v.anio || '—'} · ${v.kilometros != null ? moneyPlain(v.kilometros) + ' km' : '— km'}${v.patente ? ' · ' + esc(v.patente) : ''}</div></td>
+      <td class="cell-first"><div class="cell-main">${esc(v.marca || '')} ${esc(v.modelo)}${v.consignacion ? ' <span class="badge" style="background:var(--brand);color:#fff">Consig.</span>' : ''}</div><div class="cell-sub">${v.anio || '—'} · ${v.kilometros != null ? moneyPlain(v.kilometros) + ' km' : '— km'}${v.patente ? ' · ' + esc(v.patente) : ''}</div></td>
       <td data-label="Estado">${estadoBadge}${tipoV ? ' ' + tipoV : ''}</td>
       <td data-label="Comprador"><div>${v.comprador_nombre ? esc(v.comprador_nombre) : '<span class="muted">—</span>'}</div><div class="cell-sub">${v.fecha_venta ? fmtDate(v.fecha_venta) : ''}</div></td>
       <td class="num" data-label="Costo">${money(v.costo_total)}</td>
@@ -1225,11 +1225,14 @@ function openVehiculoForm(veh) {
       </div>
 
       <div class="form-section">Compra</div>
+      <label class="inline-check" style="margin:0 0 10px"><input type="checkbox" id="f-consignacion" ${v.consignacion ? 'checked' : ''}> Auto en consignación (no es mío — solo gano comisión)</label>
       <div class="form-grid">
         <div class="field"><label>Fecha de compra</label><input id="f-fecha_compra" type="date" value="${v.fecha_compra || ''}"></div>
-        <div class="field"><label>Precio de compra</label><input id="f-precio_compra" type="number" value="${v.precio_compra ?? ''}" placeholder="0"></div>
+        <div class="field"><label id="f-precio_compra-label">Precio de compra</label><input id="f-precio_compra" type="number" value="${v.precio_compra ?? ''}" placeholder="0"></div>
         <div class="field"><label>Gastos (reparaciones, etc.)</label><input id="f-gastos" type="number" value="${v.gastos ?? 0}" placeholder="0"></div>
         <div class="field"><label>Financiado por (financista)</label><select id="f-financista">${selectFinancistas(v.financista_id)}</select></div>
+        <div class="field" id="f-comision-box"><label>Comisión (monto fijo $)</label><input id="f-comision_monto" type="number" value="${v.comision_monto ?? ''}" placeholder="ej: 500000"></div>
+        <div class="field" id="f-comision-pct-box"><label>…o comisión %</label><input id="f-comision_pct" type="number" step="0.01" value="${v.comision_pct ?? ''}" placeholder="ej: 3"></div>
       </div>
 
       <div class="form-section">Estado y venta</div>
@@ -1285,14 +1288,20 @@ function openVehiculoForm(veh) {
   modal(html, 'lg');
   bindRut($('#f-comprador_rut'));
 
-  const estado = $('#f-estado'), tipoV = $('#f-tipo_venta');
+  const estado = $('#f-estado'), tipoV = $('#f-tipo_venta'), consig = $('#f-consignacion');
   const syncVisibility = () => {
     $('#venta-box').classList.toggle('hidden', estado.value !== 'vendido');
     $('#fin-box').classList.toggle('hidden', tipoV.value !== 'financiamiento_directo');
+    const esConsig = consig.checked;
+    $('#f-comision-box').style.display = esConsig ? '' : 'none';
+    $('#f-comision-pct-box').style.display = esConsig ? '' : 'none';
+    $('#f-precio_compra-label').textContent = esConsig ? 'Precio referencia dueño (opcional)' : 'Precio de compra';
     updateFinPreview();
   };
   estado.addEventListener('change', () => { if (estado.value === 'vendido' && !$('#f-fecha_venta').value) $('#f-fecha_venta').value = todayISO(); syncVisibility(); });
   tipoV.addEventListener('change', syncVisibility);
+  consig.addEventListener('change', syncVisibility);
+  syncVisibility();
   $('#f-transferido').addEventListener('change', (e) => { $('#transf-fecha-box').classList.toggle('hidden', !e.target.checked); if (e.target.checked && !$('#f-fecha_transferencia').value) $('#f-fecha_transferencia').value = todayISO(); });
   ['f-precio_venta', 'f-pie', 'f-fin_cuota', 'f-fin_n'].forEach((id) => $('#' + id).addEventListener('input', updateFinPreview));
   $('#f-fin-calc').addEventListener('click', () => {
@@ -1333,6 +1342,9 @@ async function guardarVehiculo(veh, finPrev) {
     fecha_compra: $('#f-fecha_compra').value || null,
     precio_compra: num($('#f-precio_compra').value),
     gastos: num($('#f-gastos').value),
+    consignacion: $('#f-consignacion').checked,
+    comision_monto: $('#f-consignacion').checked ? (num($('#f-comision_monto').value) || null) : null,
+    comision_pct: $('#f-consignacion').checked ? (num($('#f-comision_pct').value) || null) : null,
     financista_id: $('#f-financista').value || null,
     estado,
     fecha_venta: estado === 'vendido' ? ($('#f-fecha_venta').value || null) : null,
@@ -1418,7 +1430,7 @@ function openVehiculoDetalle(id) {
       <div class="d"><div class="l">Año / Kilómetros</div><div class="v">${v.anio || '—'} · ${v.kilometros != null ? moneyPlain(v.kilometros) + ' km' : '—'}</div></div>
       <div class="d"><div class="l">Patente</div><div class="v">${esc(v.patente) || '—'}</div></div>
       <div class="d"><div class="l">Color · Combustible</div><div class="v">${esc(v.color) || '—'} · ${esc(v.combustible) || '—'}</div></div>
-      <div class="d"><div class="l">Compra</div><div class="v">${money(v.precio_compra)} <span class="muted">(${fmtDate(v.fecha_compra)})</span></div></div>
+      <div class="d"><div class="l">${v.consignacion ? 'Consignación · ref. dueño' : 'Compra'}</div><div class="v">${money(v.precio_compra)} <span class="muted">(${fmtDate(v.fecha_compra)})</span></div></div>
       <div class="d"><div class="l">Gastos</div><div class="v">${money(v.gastos)}</div></div>
       <div class="d"><div class="l">Financista de la compra</div><div class="v">${esc(v.financista_nombre) || '—'}</div></div>
       <div class="d"><div class="l">Costo total</div><div class="v">${money(v.costo_total)}</div></div>
@@ -1439,7 +1451,7 @@ function openVehiculoDetalle(id) {
       <div class="d"><div class="l">Transferencia</div><div class="v">${v.transferido ? '<span class="badge si">✓ Transferido ' + (v.fecha_transferencia ? fmtDate(v.fecha_transferencia) : '') + '</span>' : '<span class="badge no">Pendiente</span>'}</div></div>
     </div>
     <div class="mini-stat" style="margin-top:14px">
-      <div class="ms"><div class="l">Margen del auto</div><div class="v" style="color:${gan >= 0 ? 'var(--green)' : 'var(--red)'}">${money(gan)}</div></div>
+      <div class="ms"><div class="l">${v.consignacion ? 'Comisión' : 'Margen del auto'}</div><div class="v" style="color:${(v.consignacion ? (Number(v.comision) || 0) : gan) >= 0 ? 'var(--green)' : 'var(--red)'}">${money(v.consignacion ? v.comision : gan)}</div></div>
       ${isFin ? `<div class="ms"><div class="l">Interés a ganar</div><div class="v" style="color:var(--green)">${money(interesC)}</div></div>` : ''}
       ${isFin ? `<div class="ms"><div class="l">Ganancia total</div><div class="v" style="color:var(--green)">${money(gan + interesC)}</div></div>` : ''}
     </div>`;
@@ -1904,11 +1916,16 @@ function flujoCaja() {
     if (rem > 0) { const m = String(c.fecha_vencimiento || '').slice(0, 7); addAt(m ? (m < cm ? cm : m) : null, campo, rem); }
   };
   for (const v of state.vehiculos) {
-    if (v.fecha_compra) addAt(mesEvento(v.fecha_compra), 'salidas', (Number(v.precio_compra) || 0) + (Number(v.gastos) || 0));
-    if (v.estado === 'vendido' && v.fecha_venta) {
-      const fin = state.financiamientos.find((f) => f.vehiculo_id === v.id);
-      if (fin) addAt(mesEvento(v.fecha_venta), 'entradas', Number(fin.pie) || 0);
-      else addAt(mesEvento(v.fecha_venta), 'entradas', Number(v.precio_venta) || 0);
+    if (v.consignacion) {
+      if (v.fecha_compra && (Number(v.gastos) || 0) > 0) addAt(mesEvento(v.fecha_compra), 'salidas', Number(v.gastos) || 0);
+      if (v.estado === 'vendido' && v.fecha_venta) addAt(mesEvento(v.fecha_venta), 'entradas', Number(v.comision) || 0);
+    } else {
+      if (v.fecha_compra) addAt(mesEvento(v.fecha_compra), 'salidas', (Number(v.precio_compra) || 0) + (Number(v.gastos) || 0));
+      if (v.estado === 'vendido' && v.fecha_venta) {
+        const fin = state.financiamientos.find((f) => f.vehiculo_id === v.id);
+        if (fin) addAt(mesEvento(v.fecha_venta), 'entradas', Number(fin.pie) || 0);
+        else addAt(mesEvento(v.fecha_venta), 'entradas', Number(v.precio_venta) || 0);
+      }
     }
   }
   for (const c of state.cuotasC) addCuota(c, 'entradas');
