@@ -1180,7 +1180,7 @@ function onContentClick(e) {
   else if (act === 'filtro-venc') { state.filtroVenc = el.dataset.f; renderView(); }
   else if (act === 'veh-detail') openVehiculoDetalle(el.dataset.id);
   else if (act === 'fin-detail') openFinancistaDetalle(el.dataset.id);
-  else if (act === 'pagar-cuota') pagarCuota(el.dataset.tabla, el.dataset.id, true);
+  else if (act === 'pagar-cuota') registrarPago(el.dataset.tabla, el.dataset.id, false);
 }
 
 /* ============================================================
@@ -1476,17 +1476,25 @@ function openVehiculoDetalle(id) {
   modal(html, 'lg');
   $('#veh-edit').addEventListener('click', () => { closeModal(); openVehiculoForm(v); });
   if (isFin) $('#veh-promesa').addEventListener('click', () => generarPromesa(v, fin, cuotas));
-  $$('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
+  $$('#modal-root [data-act="pay-cuota"]').forEach((b) => b.addEventListener('click', () => registrarPago(b.dataset.tabla, b.dataset.id, true)));
+  $$('#modal-root [data-act="reset-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, false)));
 }
 
 function cuotaRow(c, tabla) {
   const dd = daysUntil(c.fecha_vencimiento);
+  const pagadoPrev = Number(c.monto_pagado) || (c.pagada ? Number(c.monto) : 0);
+  const parcial = !c.pagada && pagadoPrev > 0;
+  const saldo = Math.max((Number(c.monto) || 0) - pagadoPrev, 0);
   const atras = !c.pagada && dd !== null && dd < 0;
   const cls = c.pagada ? 'pagada' : atras ? 'atras' : '';
-  const estado = c.pagada ? `<span class="badge pag">✓ Pagada ${c.fecha_pago ? fmtDate(c.fecha_pago) : ''}</span>` : atras ? `<span class="badge atras">Atrasada</span>` : `<span class="badge pend">Pendiente</span>`;
+  const estado = c.pagada
+    ? `<span class="badge pag">✓ Pagada ${c.fecha_pago ? fmtDate(c.fecha_pago) : ''}</span>`
+    : parcial ? `<span class="badge pend">Abonado ${money(pagadoPrev)} · saldo ${money(saldo)}</span>`
+    : atras ? `<span class="badge atras">Atrasada</span>`
+    : `<span class="badge pend">Pendiente</span>`;
   const btn = c.pagada
-    ? `<button class="btn btn-soft btn-xs" data-act="toggle-cuota" data-tabla="${tabla}" data-id="${c.id}" data-estado="pagada">Marcar pendiente</button>`
-    : `<button class="btn btn-success btn-xs" data-act="toggle-cuota" data-tabla="${tabla}" data-id="${c.id}" data-estado="pendiente">Registrar pago</button>`;
+    ? `<button class="btn btn-soft btn-xs" data-act="reset-cuota" data-tabla="${tabla}" data-id="${c.id}">Marcar pendiente</button>`
+    : `<button class="btn btn-success btn-xs" data-act="pay-cuota" data-tabla="${tabla}" data-id="${c.id}">Registrar pago</button>${parcial ? ` <button class="btn btn-soft btn-xs" data-act="reset-cuota" data-tabla="${tabla}" data-id="${c.id}">Deshacer</button>` : ''}`;
   return `<div class="cuota-row ${cls}">
     <div class="n">${c.numero}</div>
     <div class="info"><div class="m">${money(c.monto)}</div><div class="d">Vence ${fmtDate(c.fecha_vencimiento)} · ${estado}</div></div>
@@ -1507,6 +1515,45 @@ async function pagarCuota(tabla, id, pagar) {
   toast(pagar ? 'Pago registrado' : 'Cuota marcada pendiente', 'ok');
   renderView();
   reabrirDetalleSiCorresponde(tabla, id);
+}
+function registrarPago(tabla, id, reopen) {
+  const arr = tabla === 'cuotas_comprador' ? state.cuotasC : state.cuotasF;
+  const c = arr.find((x) => x.id === id); if (!c) return;
+  const pagadoPrev = Number(c.monto_pagado) || (c.pagada ? Number(c.monto) : 0);
+  const saldo = Math.max((Number(c.monto) || 0) - pagadoPrev, 0);
+  const html = `
+  <div class="modal-head"><h3>Registrar pago · cuota ${c.numero}</h3><button class="x" data-close>×</button></div>
+  <div class="modal-body">
+    <div class="calcbox" style="margin-bottom:14px">
+      <div class="c-item"><div class="l">Valor cuota</div><div class="v">${money(c.monto)}</div></div>
+      <div class="c-item"><div class="l">Ya abonado</div><div class="v">${money(pagadoPrev)}</div></div>
+      <div class="c-item"><div class="l">Saldo</div><div class="v" style="color:var(--red)">${money(saldo)}</div></div>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Monto de este pago</label><input id="pg-monto" type="number" value="${saldo}" placeholder="0"></div>
+      <div class="field"><label>Fecha del pago</label><input id="pg-fecha" type="date" value="${todayISO()}"></div>
+    </div>
+    <div class="help">Si el monto cubre el saldo, la cuota queda pagada. Si es menor, queda como abono parcial con su saldo pendiente.</div>
+  </div>
+  <div class="modal-foot"><div><span></span></div><div class="right"><button class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-primary" id="pg-save">Registrar pago</button></div></div>`;
+  modal(html);
+  $('#pg-save').addEventListener('click', async () => {
+    const abono = num($('#pg-monto').value);
+    if (abono <= 0) { toast('Ingresa el monto del pago', 'err'); return; }
+    const fecha = $('#pg-fecha').value || todayISO();
+    const nuevo = pagadoPrev + abono;
+    const patch = { monto_pagado: nuevo, fecha_pago: fecha, pagada: nuevo >= (Number(c.monto) || 0) };
+    const { error } = await supabase.from(tabla).update(patch).eq('id', id);
+    if (error) { toast('Error: ' + error.message, 'err'); return; }
+    await loadAll();
+    toast(patch.pagada ? 'Cuota pagada' : 'Abono registrado', 'ok');
+    closeModal();
+    renderView();
+    if (reopen) {
+      if (tabla === 'cuotas_comprador') { const x = state.cuotasC.find((y) => y.id === id); if (x) openVehiculoDetalle(x.vehiculo_id); }
+      else { const x = state.cuotasF.find((y) => y.id === id); if (x) openFinancistaDetalle(x.financista_id); }
+    }
+  });
 }
 function reabrirDetalleSiCorresponde(tabla, id) {
   if (!$('#modal-root').innerHTML) return;
@@ -1613,7 +1660,8 @@ function openFinancistaDetalle(id) {
   modal(html, 'lg');
   $('#fin-edit').addEventListener('click', () => { closeModal(); openFinancistaForm(f); });
   $('#fin-nuevo-prestamo').addEventListener('click', () => { openPrestamoForm(f); });
-  $$('#modal-root [data-act="toggle-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, b.dataset.estado === 'pendiente')));
+  $$('#modal-root [data-act="pay-cuota"]').forEach((b) => b.addEventListener('click', () => registrarPago(b.dataset.tabla, b.dataset.id, true)));
+  $$('#modal-root [data-act="reset-cuota"]').forEach((b) => b.addEventListener('click', () => pagarCuota(b.dataset.tabla, b.dataset.id, false)));
   $$('#modal-root [data-act="del-prestamo"]').forEach((b) => b.addEventListener('click', () => eliminarPrestamo(b.dataset.id, f.id)));
   $$('#modal-root [data-act="edit-prestamo"]').forEach((b) => b.addEventListener('click', () => { const pr = state.prestamos.find((x) => x.id === b.dataset.id); if (pr) { closeModal(); openPrestamoForm(f, pr); } }));
 }
@@ -1849,11 +1897,11 @@ function flujoCaja() {
   const ensure = (k) => (meses[k] || (meses[k] = { entradas: 0, salidas: 0 }));
   const addAt = (k, campo, monto) => { const n = Number(monto) || 0; if (!k || !n) return; ensure(k)[campo] += n; };
   const mesEvento = (fecha) => (fecha ? String(fecha).slice(0, 7) : null);
-  const mesCuota = (c) => {
-    if (c.pagada) return String(c.fecha_pago || c.fecha_vencimiento || '').slice(0, 7) || null;
-    const m = String(c.fecha_vencimiento || '').slice(0, 7);
-    if (!m) return null;
-    return m < cm ? cm : m;
+  const addCuota = (c, campo) => {
+    const paid = Number(c.monto_pagado) || (c.pagada ? Number(c.monto) : 0);
+    const rem = Math.max((Number(c.monto) || 0) - paid, 0);
+    if (paid > 0) addAt(String(c.fecha_pago || c.fecha_vencimiento || '').slice(0, 7) || null, campo, paid);
+    if (rem > 0) { const m = String(c.fecha_vencimiento || '').slice(0, 7); addAt(m ? (m < cm ? cm : m) : null, campo, rem); }
   };
   for (const v of state.vehiculos) {
     if (v.fecha_compra) addAt(mesEvento(v.fecha_compra), 'salidas', (Number(v.precio_compra) || 0) + (Number(v.gastos) || 0));
@@ -1863,12 +1911,12 @@ function flujoCaja() {
       else addAt(mesEvento(v.fecha_venta), 'entradas', Number(v.precio_venta) || 0);
     }
   }
-  for (const c of state.cuotasC) addAt(mesCuota(c), 'entradas', c.pagada ? (c.monto_pagado ?? c.monto) : c.monto);
+  for (const c of state.cuotasC) addCuota(c, 'entradas');
   for (const p of state.prestamos) {
     addAt(mesEvento(p.fecha_inicio), 'entradas', p.monto);
     if (p.modalidad === 'interes_indefinido' && p.fecha_devolucion) addAt(mesEvento(p.fecha_devolucion), 'salidas', p.monto);
   }
-  for (const c of state.cuotasF) addAt(mesCuota(c), 'salidas', c.pagada ? (c.monto_pagado ?? c.monto) : c.monto);
+  for (const c of state.cuotasF) addCuota(c, 'salidas');
   let saldo = 0;
   return Object.keys(meses).sort().map((k) => {
     const m = meses[k];
